@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Separator } from '../components/ui/separator';
 import { Preview } from './preview';
+import { ControlLabel } from '../components/control-label';
 
 type StudioProps = {
   kind: 'mandala' | 'video';
@@ -83,9 +84,13 @@ export function StudioPlaceholder({
           <div className="p-5">
             <p className="eyebrow mb-3">WORKSPACE</p>
             <label className="block space-y-2 text-sm" htmlFor={`${kind}-seed`}>
-              <span>Random seed</span>
+              <ControlLabel
+                label="Random seed"
+                help="Controls reproducible randomness. The same seed and settings produce the same design; changing it varies the composition and details. Each studio has its own independent seed."
+              />
               <Input
                 id={`${kind}-seed`}
+                aria-label="Random seed"
                 value={seed}
                 maxLength={128}
                 onChange={(event) => setSeed(event.target.value)}

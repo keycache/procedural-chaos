@@ -24,6 +24,8 @@ No backend, accounts, or server-side processing are required. Desktop Chrome or 
 9. Give the project a name and **Save project**. Open **Library**, refresh, and reopen it: the exact custom recipe and drawing should return. Subsequent saves update that project; **Save a copy** creates another. Unsaved tab edits are lost on refresh.
 10. At the bottom of the settings, export **SVG**, **PNG**, and **JSON**. SVG includes recipe and geometry metadata. Choose PNG sizes from 1024 to 8192 pixels and white/transparent backgrounds. JSON is the exact engine recipe; JSON import is not yet a UI feature.
 
+Each setting has a small info icon beside its label. Hover over it or focus it with **Tab** to see what the control does, including prerequisites and effects on custom layers. **Escape** dismisses the tooltip.
+
 Style, blend, complexity, and structure/growth changes rebuild custom layers; global appearance changes preserve them. Adding/removing bands redistributes widths; moving swaps bands between radial slots. Use undo to recover an earlier composition.
 
 Styled paths are closed and can enclose coloring regions, but dense intersections and tiny details are not automatically simplified. Generation uses a Web Worker with a 200 ms debounce, cancellation/stale-result rejection, a 15-second timeout, and a 24,000-path limit. Pending/error previews never silently export old artwork. Very large PNGs require more browser memory.

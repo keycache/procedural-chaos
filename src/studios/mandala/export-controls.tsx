@@ -13,6 +13,7 @@ import {
   type ExportBackground,
 } from './exports';
 import { selectClass } from './style-controls';
+import { ControlLabel } from '../../components/control-label';
 
 export function ExportControls({
   recipe,
@@ -55,7 +56,10 @@ export function ExportControls({
     <div className="space-y-4 border-t border-border p-5">
       <p className="eyebrow">EXPORT ARTWORK</p>
       <label className="block space-y-2 text-sm">
-        <span>Background</span>
+        <ControlLabel
+          label="Background"
+          help="Uses white or transparency behind exported SVG and PNG artwork. The on-screen preview stays white, and JSON recipes are unaffected."
+        />
         <select
           aria-label="Export background"
           className={selectClass}
@@ -73,7 +77,10 @@ export function ExportControls({
         </select>
       </label>
       <label className="block space-y-2 text-sm">
-        <span>PNG resolution</span>
+        <ControlLabel
+          label="PNG resolution"
+          help="Sets the exported PNG's square pixel dimensions, from 1024 to 8192. Larger images contain more pixels and need more memory and encoding time. SVG and JSON are unaffected."
+        />
         <select
           aria-label="PNG resolution"
           className={selectClass}

@@ -4,6 +4,7 @@ import { Input } from '../../components/ui/input';
 import { presets } from './editor';
 import { selectClass } from './style-controls';
 import { useMandalaStore } from './store';
+import { ControlLabel } from '../../components/control-label';
 
 export function WorkspaceControls() {
   const { name, setName, setSeed, seedHistory, applyPreset, projectId } =
@@ -11,7 +12,10 @@ export function WorkspaceControls() {
   return (
     <div className="space-y-4 border-b border-border p-5">
       <label className="block space-y-2 text-sm">
-        <span>Project name</span>
+        <ControlLabel
+          label="Project name"
+          help="Names the saved Library item and exported files. Renaming does not change the artwork; save the project to keep the new name."
+        />
         <Input
           aria-label="Project name"
           value={name}
@@ -25,7 +29,10 @@ export function WorkspaceControls() {
           : 'Not saved yet. Your edits stay in this tab until you save.'}
       </p>
       <label className="block space-y-2 text-sm">
-        <span>Composition preset</span>
+        <ControlLabel
+          label="Composition preset"
+          help="Loads a curated starting composition, including its name, seed, style, and appearance. It replaces custom layers; Undo can restore your previous edits."
+        />
         <select
           aria-label="Composition preset"
           className={selectClass}
@@ -54,7 +61,10 @@ export function WorkspaceControls() {
         <Shuffle /> Randomize seed
       </Button>
       <label className="block space-y-2 text-sm">
-        <span>Recent seeds</span>
+        <ControlLabel
+          label="Recent seeds"
+          help="Reuses one of the last 12 successfully generated seeds in this tab. Only the seed changes, not your other settings. This history is cleared on refresh."
+        />
         <select
           aria-label="Recent seeds"
           className={selectClass}
