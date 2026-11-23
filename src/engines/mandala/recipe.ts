@@ -90,12 +90,19 @@ export const layerSchema = z
     path: ['outerRadius'],
   });
 
+export const floralCompositionSchema = z.strictObject({
+  family: z.literal('bold-floral'),
+  version: z.literal(1),
+  complexity: fraction,
+});
+
 export const mandalaRecipeSchema = z
   .strictObject({
     schemaVersion: z.literal(1),
     engineVersion: z.literal(ENGINE_VERSION),
     seed: seedSchema,
     style: styleBlendSchema.optional(),
+    composition: floralCompositionSchema.optional(),
     canvas: z.strictObject({ size: z.number().int().min(128).max(4096) }),
     structure: z.strictObject({
       baseGeometry: z.enum(baseGeometries),
@@ -111,7 +118,7 @@ export const mandalaRecipeSchema = z
       density: fraction.default(0.5),
       negativeSpace: fraction.default(0),
     }),
-    layers: z.array(layerSchema).min(1).max(12),
+    layers: z.array(layerSchema).max(12),
   })
   .superRefine((recipe, context) => {
     const { symmetryType, symmetryOrder } = recipe.structure;
@@ -158,7 +165,26 @@ export const mandalaRecipeSchema = z
         });
       }
     });
-    if (!recipe.layers.some((layer) => layer.enabled)) {
+    if (recipe.composition) {
+      if (
+        recipe.layers.length !== 0 ||
+        symmetryType !== 'rotational' ||
+        ![6, 8, 10, 12].includes(symmetryOrder) ||
+        recipe.structure.baseGeometry !== 'freeform' ||
+        recipe.structure.centers !== 1 ||
+        recipe.structure.brokenSymmetry !== 0 ||
+        recipe.global.density !== 0.5 ||
+        recipe.global.negativeSpace !== 0 ||
+        recipe.global.irregularity !== 0
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['composition'],
+          message:
+            'Bold floral uses no ring layers, one freeform center, 6/8/10/12 rotational divisions, and only stroke-width appearance overrides.',
+        });
+      }
+    } else if (!recipe.layers.some((layer) => layer.enabled)) {
       context.addIssue({
         code: 'custom',
         path: ['layers'],

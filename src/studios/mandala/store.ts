@@ -8,6 +8,7 @@ import {
   presetDocument,
   redistributeLayers,
   type EditorDocument,
+  type EditorMode,
 } from './editor';
 
 type MandalaState = EditorDocument & {
@@ -17,7 +18,7 @@ type MandalaState = EditorDocument & {
   seedHistory: string[];
   setName: (name: string) => void;
   setSeed: (seed: string) => void;
-  setMode: (mode: Style | 'hybrid') => void;
+  setMode: (mode: EditorMode) => void;
   setWeight: (style: Style, weight: number) => void;
   setOptions: (options: Partial<EditorDocument['options']>) => void;
   setGlobals: (globals: EditorDocument['globals']) => void;
@@ -63,7 +64,7 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
         blend:
           mode === 'hybrid'
             ? { traditional: 0.7, geometric: 0.3, organic: 0, abstract: 0 }
-            : singleStyle(mode),
+            : singleStyle(mode === 'bold-floral' ? 'traditional' : mode),
         options: { complexity: get().options.complexity },
         globals: {},
         layers: null,
@@ -84,7 +85,7 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
           ? get().blend
           : mode === 'hybrid'
             ? { traditional: 0.7, geometric: 0.3, organic: 0, abstract: 0 }
-            : singleStyle(mode),
+            : singleStyle(mode === 'bold-floral' ? 'traditional' : mode),
       });
     },
     applyPreset: (id) => commit(presetDocument(id)),

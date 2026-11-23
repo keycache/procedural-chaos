@@ -51,6 +51,36 @@ describe('style editor state', () => {
     expect(useMandalaStore.getState().options.centers).toBeUndefined();
   });
 
+  it('opts into floral geometry without carrying ring controls and restores custom layers through undo', () => {
+    const state = useMandalaStore.getState();
+    state.addLayer();
+    state.setOptions({ centers: 3, noise: 0.4 });
+    state.addLayer();
+    const original = editorSnapshot(useMandalaStore.getState());
+    state.setMode('bold-floral');
+    const floral = editorRecipe(useMandalaStore.getState());
+    expect(floral.composition?.family).toBe('bold-floral');
+    expect(floral.layers).toEqual([]);
+    expect(floral.structure.symmetryOrder).toBe(8);
+    state.setOptions({ symmetryOrder: 12, complexity: 0.9 });
+    state.setGlobals({ strokeWidth: 3 });
+    expect(editorRecipe(useMandalaStore.getState())).toMatchObject({
+      composition: { complexity: 0.9 },
+      structure: { symmetryOrder: 12 },
+      global: { strokeWidth: 3 },
+    });
+    state.undo();
+    state.undo();
+    state.undo();
+    expect(editorSnapshot(useMandalaStore.getState())).toEqual(original);
+    state.redo();
+    expect(editorRecipe(useMandalaStore.getState())).toEqual(floral);
+    state.setMode('geometric');
+    expect(
+      editorRecipe(useMandalaStore.getState()).composition,
+    ).toBeUndefined();
+  });
+
   it('restores style defaults while preserving a valid custom blend', () => {
     const state = useMandalaStore.getState();
     state.setMode('hybrid');

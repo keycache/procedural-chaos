@@ -13,6 +13,7 @@ import { mandalaRecipeSchema } from './recipe';
 import type { MotifId } from './recipe';
 import { symmetryOperations, transformPath } from './symmetry';
 import { closeContours, transformMotif } from './transforms';
+import { generateBoldFloral } from './bold-floral';
 
 const MAX_PATHS = 24_000;
 
@@ -41,6 +42,7 @@ function ornaments(motif: MotifId): PathCommand[][] {
 
 export function generateMandala(input: unknown): GeometryModel {
   const recipe = mandalaRecipeSchema.parse(input);
+  if (recipe.composition) return generateBoldFloral(recipe);
   const { size } = recipe.canvas;
   const {
     symmetryOrder: order,

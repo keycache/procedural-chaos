@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEditorDocument, editorRecipe } from './editor';
+import { createEditorDocument, editorRecipe, presetDocument } from './editor';
 import { createMandalaPreview } from '../../engines/mandala/render';
 import { generateMandala } from '../../engines/mandala/generate';
 import { mandalaRecipeSchema } from '../../engines/mandala/recipe';
@@ -12,13 +12,18 @@ describe('portable mandala output', () => {
     await expect(exportPng('<svg />', 8193, 'white')).rejects.toThrow();
     await expect(exportPng('<svg />', 2048.5, 'white')).rejects.toThrow();
   });
-  it('round-trips an exact JSON recipe into identical artwork', () => {
-    const recipe = editorRecipe(createEditorDocument());
-    const loaded = mandalaRecipeSchema.parse(JSON.parse(exportRecipe(recipe)));
-    expect(renderSvg(generateMandala(loaded))).toBe(
-      renderSvg(generateMandala(recipe)),
-    );
-  });
+  it.each(['lotus', 'floral'])(
+    'round-trips an exact %s JSON recipe into identical artwork',
+    (preset) => {
+      const recipe = editorRecipe(presetDocument(preset));
+      const loaded = mandalaRecipeSchema.parse(
+        JSON.parse(exportRecipe(recipe)),
+      );
+      expect(renderSvg(generateMandala(loaded))).toBe(
+        renderSvg(generateMandala(recipe)),
+      );
+    },
+  );
 
   it('embeds XML-safe recipe and symmetry metadata without altering the drawn geometry', () => {
     const document = createEditorDocument();

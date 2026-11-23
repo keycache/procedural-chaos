@@ -2,7 +2,7 @@
 
 Phased plan for a toy, client-side app with two independent studios: **Part 1 — Mandala Studio** and **Part 2 — Video Studio**. Technical details are in [SPECIFICATIONS.md](./SPECIFICATIONS.md).
 
-Build order: foundation → Part 1 → Part 2 → later enhancements. Each phase should leave the app in a usable state.
+Build order: foundation → Part 1 editor and outputs → Part 1 ornamental-generation phases 3.1–3.5 → Part 2 → later enhancements. Each phase should leave the app in a usable state.
 
 ---
 
@@ -169,6 +169,125 @@ SVG exports include recipe/center/symmetry metadata and path draw order; PNG sup
 
 ---
 
+## Phase 3.1 — Part 1: Bold floral composition
+
+**Goal:** Prove a visibly stronger design language with one convincing bold-floral composition before adding more controls or detail.
+
+**Status:** Implemented locally. Phases 3.2–3.5 remain planned. All generation remains deterministic and entirely client-side. The references guide visual qualities, not exact reproductions.
+
+- Build an art-directed floral composition with a central rosette, dominant leaves, alternating secondary petals, curling tendrils, and a scalloped outer silhouette.
+- Introduce compound Bézier motifs and tapered, selectively solid-black accents. Use expressive proportions and intentional empty space rather than increasing path count everywhere.
+- Allow prominent petals to span radial bands; do not force every composition into concentric separator rings.
+- Establish explicit front-to-back ordering and prototype overlap masking so rear outlines do not show through foreground petals. Keep visible SVG and PNG output consistent.
+- Distinguish colorable outlines, decorative strokes, and solid accents in the geometry/export metadata. Closed paths alone are not proof of clean coloring regions; Part 2 still performs region detection.
+- Start with one curated composition and a small set of bounded seeded variations. Reuse the current symmetry, worker, preview, and export infrastructure.
+- Preserve existing recipes and rendering behavior; add the new composition as an explicit opt-in rather than silently replacing current styles.
+
+**Done when:** the floral preset has a strong silhouette, readable large forms, deliberate black/white contrast, and balanced spacing at both thumbnail and full-preview sizes. Establish this visual baseline before generalizing the ornament engine.
+
+**Implemented locally:** the opt-in **bold-floral** style and **Floral flourish** preset use compound cubic-Bezier crowns, nested hatched leaves, mirrored curls, two central petal crowns, and tapered solid-black accents. Seeded variations change fullness, crown/leaf heights, and curl turns within the same art-directed composition. Six/eight/ten/twelve rotational divisions adapt motif widths; complexity adds bounded decoration without changing the primary silhouette, and stroke width preserves the contour/detail hierarchy.
+
+SVG foreground-silhouette masks remove rear lines behind closed foreground forms without white backing paint, preserving transparent exports. Paths carry explicit outline/decoration/solid-accent roles and occluder flags. A versioned optional composition recipe bypasses ring planning; existing recipes retain their original rendering. Inapplicable ring/layer/blend controls are hidden for floral mode. Workers, undo/redo, preset matching, Library save/reopen, and SVG/PNG/JSON exports are reused. The generalized ornament engine and additional composition families remain later phases. No commits or deployments are performed by the assistant.
+
+**UI checks:**
+
+1. Select the new floral preset and compare it with the existing traditional preset. Expect large expressive forms, tendrils, black accents, and an outer petal silhouette—not merely denser rings.
+2. Try several seeds, then restore the original seed/settings. Expect coherent variations and exact reproduction.
+3. Zoom in and export SVG/PNG. Check smooth curves, clean overlaps, preserved accents, and matching visible geometry.
+4. Compare 6/8/10/12 floral divisions and low/high complexity. Expect adapted crown/leaf widths and controlled extra detail, not more separator rings. Changing settings shows Custom composition; Undo restores the selected preset and exact artwork.
+5. Save/reopen a floral project, then reopen an existing band-based project. Expect exact drawings/settings in both cases. Switch families and undo to recover custom layers.
+
+---
+
+## Phase 3.2 — Part 1: Shape-aware ornament vocabulary
+
+**Goal:** Generalize the successful floral design into reusable motifs that contain well-composed interior decoration.
+
+- Extract reusable parameterized lotus petals, leaves, paisleys, tendrils, scallops, and beaded borders from the validated design approach.
+- Define motif-local contours, interior usable areas, attachment points, and curved spines so decorations follow their parent shape.
+- Add contour-following inset borders, veins, curls, dots, and nested smaller petals. Use shape-appropriate patterns rather than stamping every decoration into every motif.
+- Enforce minimum spacing, border clearance, and feature-size limits. Bound subdivision/detail work and surface unsupported settings or complexity limits explicitly.
+- Separate primary outlines, secondary forms, fine decoration, and solid accents with a restrained stroke-weight hierarchy.
+- Keep intentional decorative open strokes distinct from closed colorable boundaries; do not force-close every decorative curve.
+- Add focused deterministic geometry tests and a small fixed-seed visual comparison set. Do not equate path count with visual quality.
+
+**Done when:** the motif vocabulary produces clean, recognizably different ornaments with detail that follows each shape, without accidental protrusions or unreadable micro-patterns.
+
+**UI checks:**
+
+1. Compare available ornament treatments on the floral composition. Expect details to remain inside the intended outlines with visible clearance.
+2. Vary ornament detail and spacing. Expect controlled changes, preserved large forms, and explicit limits rather than freezes or silently truncated drawings.
+3. Inspect low/high detail at normal preview size and in an exported image. Fine lines must remain subordinate to the primary silhouette.
+
+---
+
+## Phase 3.3 — Part 1: Ornate layered lotus
+
+**Goal:** Generate intricate botanical mandalas with overlapping petal crowns and nested ornament, inspired by the second reference.
+
+- Add a hierarchical composition planner: central rosette → dominant petal crowns → offset secondary crowns → outer scallops and border details.
+- Coordinate crown counts, angular offsets, petal lengths, and widths so layers interleave deliberately instead of colliding randomly.
+- Decorate each petal with the shape-aware vocabulary from Phase 3.2, keeping interior ornament subordinate to its parent shape.
+- Generalize overlap ordering/masking for nested crowns; keep covered rear contours and ornaments out of the visible rendering.
+- Balance quiet areas with dense areas and vary detail by structural role. Increasing complexity should enrich a composition, not erase its hierarchy.
+- Offer a curated ornate-lotus preset with bounded seeded variation before exposing additional advanced controls.
+
+**Done when:** the design reads as a layered flower at thumbnail size and reveals coherent nested botanical detail when enlarged, without a mesh of uncontrolled intersections.
+
+**UI checks:**
+
+1. Select the ornate-lotus preset. Expect interleaved petal crowns and a clear center-to-edge hierarchy distinct from the bold-floral family.
+2. Compare lower/higher detail and several seeds. Large floral structure should stay readable while interior ornament changes.
+3. Inspect overlapping petals at high zoom and in SVG/PNG exports. Rear outlines must not bleed through foreground forms.
+
+---
+
+## Phase 3.4 — Part 1: Swirling paisley composition
+
+**Goal:** Introduce a separate flowing composition strategy for the sweeping, high-contrast ornamental character of the third reference.
+
+- Plan curved spines and sweeping paisley/feather forms across radial sectors, rather than approximating the result with more concentric rings.
+- Place nested teardrops, scallops, feather lobes, and contour-following textures along these curves.
+- Pack smaller ornaments only into valid remaining pockets, with bounded placement attempts and minimum-size/clearance rules.
+- Use selective black background pockets and tapered accents to create contrast, retaining enough white space for readable forms.
+- Support coherent swirl direction and strength while preserving the chosen rotational structure and deterministic seed behavior.
+- Keep this as a distinct composition family; it need not share every ring-distribution control with the existing generator. Clearly explain or disable inapplicable controls.
+
+**Done when:** the result has continuous sweeping motion, layered internal textures, and deliberate dark/light balance—not scattered paisleys or a distorted ring preset.
+
+**UI checks:**
+
+1. Select the swirling-paisley preset and compare it with floral and lotus designs. Expect a genuinely different flowing structure.
+2. Change swirl direction/strength and seeds. Expect coordinated motion with readable large forms and stable spacing.
+3. Check dense pockets and the outer edge at high zoom. Expect bounded detail, clean gaps, and consistent SVG/PNG appearance.
+
+---
+
+## Phase 3.5 — Part 1: Studio integration and visual-quality gate
+
+**Goal:** Make all three ornamental families dependable in the existing editor and validate them before starting Part 2.
+
+- Integrate composition-family selection, curated presets, and only the controls that meaningfully apply to each family. Retain the existing styles and hybrids; do not imply arbitrary blending of incompatible composition planners.
+- Provide info tooltips and explicit guidance when changing families rebuilds custom geometry. Preserve undo/redo and accurate preset/custom-selection behavior.
+- Extend recipe validation, versioning, saved editor state, and SVG/JSON metadata for the new geometry and semantic roles. Preserve reopening and rendering of existing saved projects.
+- Ensure saved/exported recipes contain everything required for exact reproduction; do not rely on unsaved preset defaults or UI-only state.
+- Preserve cancellation, stale-result rejection, timeouts, responsive sticky previews, and explicit complexity errors. Tune budgets from measured generation/export behavior rather than removing safeguards.
+- Verify solid accents, visible overlap masks, and decorative strokes survive save/reopen and SVG/PNG export. Carry their semantic distinctions forward for Part 2; region detection itself remains Phase 4.
+- Review a fixed-seed set across all three new families at thumbnail, normal-preview, and export sizes. Include representative sparse/dense settings and verify the actual design, not just automated geometry validity.
+- Update the technical specifications and usage documentation alongside implementation.
+
+**Done when:** the three new families deliver convincing, distinct visual results, the user has reviewed representative outputs, and the complete edit/save/reopen/export workflow remains reliable. This is the visual-quality gate before Phase 4, not merely a feature-count checklist.
+
+**UI checks:**
+
+1. Switch among old and new families/presets, change applicable settings, and undo/redo. Expect understandable controls, accurate selection labels, and exact restoration.
+2. Save one design from each new family, refresh, and reopen it alongside an older project. Expect matching artwork and settings.
+3. Export SVG, white/transparent PNG, and JSON. Check contours, masks, black accents, image dimensions, and reproducible recipe metadata.
+4. Change settings rapidly on a dense design and resize/scroll the page. Only the latest result should appear; controls remain usable and errors remain actionable.
+5. Review the fixed-seed visual set for silhouette, hierarchy, spacing, contrast, smooth curves, clean overlaps, and readable detail. Resolve obvious visual regressions before proceeding to Part 2.
+
+---
+
 ## Phase 4 — Part 2: Import and region detection
 
 **Goal:** Convert any supported illustration into fillable regions.
@@ -257,6 +376,9 @@ Each can be implemented independently.
 | Risk | Mitigation |
 | --- | --- |
 | Generated mandalas contain gaps or messy tiny regions | Closure pass plus Part 2 gap closing and minimum region size |
+| More ornament produces clutter rather than stronger artwork | Validate a bold-floral baseline first; enforce hierarchy, spacing, contrast, and a fixed-seed visual-quality gate |
+| Overlaps, decorative strokes, or black accents confuse coloring | Preserve drawing roles and visible overlap behavior in exports; distinguish decoration from region boundaries during Part 2 preparation |
+| Dense ornament overwhelms browser generation or rendering | Bounded detail/packing, measured complexity budgets, worker cancellation/timeouts, and explicit errors |
 | Imported art leaks between regions | Gap-closing slider and manual split tool |
 | Symmetry detection is imperfect | Manual center/order/axis override and group editing |
 | Preview is slow with many regions | Accumulated fill canvas, cached pixel spans, reduced preview resolution |

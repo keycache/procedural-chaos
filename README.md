@@ -19,16 +19,30 @@ No backend, accounts, or server-side processing are required. Desktop Chrome or 
 4. Under **Geometry & placement**, try a different base, symmetry, distribution, or number of focal centers. Explicit choices override style defaults. Narrow ornamental borders remain rings.
 5. Expand **Growth & transformations** and try recursion, twist, distortion, noise, and broken symmetry. Broken symmetry and multiple centers are labeled as not globally symmetric. **Restore style defaults** clears overrides; selecting a new style also clears them.
 6. Zoom, drag to pan, and reset the view. The mandala automatically scales to fit the preview's available width and height; reset restores this fitted view. On desktop, the canvas uses the available viewport height and stays beside the settings as you scroll; smaller screens keep the stacked layout. Video Studio remains an independent placeholder.
-7. Choose a **Composition preset**; its name stays selected while the composition matches it, including after undo/redo or reopening a saved project. Editing its settings shows **Custom composition**; renaming alone preserves the selection. Then try **Randomize seed** or reuse a **Recent seed**. The six presets cover every style and two hybrids. Recent seeds and undo/redo are tab-session state, not permanent storage.
+7. Choose a **Composition preset**; its name stays selected while the composition matches it, including after undo/redo or reopening a saved project. Editing its settings shows **Custom composition**; renaming alone preserves the selection. Then try **Randomize seed** or reuse a **Recent seed**. The seven presets cover the four band-based styles, two hybrids, and the new bold-floral composition. Recent seeds and undo/redo are tab-session state, not permanent storage.
 8. Under **Global appearance**, vary density, negative space, irregularity, and stroke width. In **Layers**, add, duplicate, move, enable/disable, or remove bands; edit motifs, placement, radial bounds, and detail settings. Undo/redo must restore the exact drawing. Invalid layer edits show an error without hiding the editable controls.
 9. Give the project a name and **Save project**. Open **Library**, refresh, and reopen it: the exact custom recipe and drawing should return. Subsequent saves update that project; **Save a copy** creates another. Unsaved tab edits are lost on refresh.
 10. At the bottom of the settings, export **SVG**, **PNG**, and **JSON**. SVG includes recipe and geometry metadata. Choose PNG sizes from 1024 to 8192 pixels and white/transparent backgrounds. JSON is the exact engine recipe; JSON import is not yet a UI feature.
 
 Each setting has a small info icon beside its label. Hover over it or focus it with **Tab** to see what the control does, including prerequisites and effects on custom layers. **Escape** dismisses the tooltip.
 
+### Try the bold-floral composition
+
+Select **Floral flourish** under **Composition preset**, or choose **bold-floral** under **Generative style**. Expect a central flower, large nested leaves, alternating pointed/scalloped crowns, curling tendrils, and tapered black accents instead of circular separator bands.
+
+- Try **Floral divisions** at 6, 8, 10, and 12; widths adapt to the repeated sector. Eight is the curated starting point.
+- Change **Complexity** to vary hatching, beads, inset outlines, and small curls while retaining the main silhouette. **Stroke width** controls the line hierarchy without enlarging filled accents.
+- Compare seeds `flourish-008`, `flourish-009`, and `flourish-010`, then restore the original settings for identical artwork.
+- Switch back to a band-based style and undo/redo. Existing layer controls return for those styles; they are intentionally hidden for floral compositions.
+- Save/reopen and export SVG, PNG, or JSON as usual. Foreground masks remove covered rear lines without adding white paint, including on transparent exports. SVG drawing roles distinguish closed outlines, decorative open strokes, and solid ink accents.
+
+This is one art-directed floral family with bounded seeded variations, not yet the general ornament vocabulary, ornate lotus, or swirling paisley generator. Region detection and coloring remain future work.
+
+### Current generation limits
+
 Style, blend, complexity, and structure/growth changes rebuild custom layers; global appearance changes preserve them. Adding/removing bands redistributes widths; moving swaps bands between radial slots. Use undo to recover an earlier composition.
 
-Styled paths are closed and can enclose coloring regions, but dense intersections and tiny details are not automatically simplified. Generation uses a Web Worker with a 200 ms debounce, cancellation/stale-result rejection, a 15-second timeout, and a 24,000-path limit. Pending/error previews never silently export old artwork. Very large PNGs require more browser memory.
+Band-based styled paths are closed and can enclose coloring regions, but dense intersections and tiny details are not automatically simplified. Floral drawings deliberately retain open decorative strokes separately from closed outlines; neither closure nor drawing roles guarantee clean coloring regions. Generation uses a Web Worker with a 200 ms debounce, cancellation/stale-result rejection, a 15-second timeout, and a 24,000-path band-engine limit. Floral detail/divisions are bounded separately to fewer than 1,500 drawing paths. Pending/error previews never silently export old artwork. Very large PNGs require more browser memory.
 
 ## Prerequisites
 

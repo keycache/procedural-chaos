@@ -13,11 +13,12 @@ import {
   styleOptionsSchema,
 } from '../../engines/mandala/styles';
 import { seedSchema } from '../../shared/schemas';
+import { createBoldFloralRecipe } from '../../engines/mandala/bold-floral';
 
 export const editorDocumentSchema = z.strictObject({
   name: z.string().trim().min(1, 'Enter a project name.').max(80),
   seed: seedSchema,
-  mode: z.enum([...styles, 'hybrid']),
+  mode: z.enum([...styles, 'hybrid', 'bold-floral']),
   blend: styleBlendSchema,
   options: styleOptionsSchema.omit({ seed: true, blend: true }),
   globals: z.strictObject({
@@ -30,6 +31,7 @@ export const editorDocumentSchema = z.strictObject({
 });
 
 export type EditorDocument = z.output<typeof editorDocumentSchema>;
+export type EditorMode = EditorDocument['mode'];
 
 export function createEditorDocument(): EditorDocument {
   return {
@@ -44,6 +46,32 @@ export function createEditorDocument(): EditorDocument {
 }
 
 export function editorRecipe(document: EditorDocument): MandalaRecipe {
+  if (document.mode === 'bold-floral') {
+    if (
+      document.layers !== null ||
+      Object.entries(document.options).some(
+        ([key, value]) =>
+          value !== undefined &&
+          key !== 'complexity' &&
+          key !== 'symmetryOrder',
+      ) ||
+      Object.entries(document.globals).some(
+        ([key, value]) => value !== undefined && key !== 'strokeWidth',
+      )
+    )
+      throw new Error(
+        'Bold floral supports complexity, rotational divisions, and stroke width, not ring-layer or style overrides.',
+      );
+    const planned = createBoldFloralRecipe(
+      document.seed,
+      document.options.complexity,
+      document.options.symmetryOrder,
+    );
+    return mandalaRecipeSchema.parse({
+      ...planned,
+      global: { ...planned.global, ...document.globals },
+    });
+  }
   const planned = createStyleRecipe({
     seed: document.seed,
     blend: document.blend,
@@ -79,6 +107,15 @@ export function redistributeLayers(layers: LayerRecipe[]): LayerRecipe[] {
 }
 
 export const presets = [
+  {
+    id: 'floral',
+    name: 'Floral flourish',
+    description:
+      'Expressive leaves, curling tendrils, pointed crowns, and bold ink accents.',
+    style: 'bold-floral',
+    seed: 'flourish-008',
+    complexity: 0.65,
+  },
   {
     id: 'lotus',
     name: 'Lotus filigree',
@@ -138,7 +175,12 @@ export function presetDocument(id: string): EditorDocument {
     name: preset.name,
     seed: preset.seed,
     mode: preset.style,
-    blend: 'blend' in preset ? { ...preset.blend } : singleStyle(preset.style),
+    blend:
+      'blend' in preset
+        ? { ...preset.blend }
+        : singleStyle(
+            preset.style === 'bold-floral' ? 'traditional' : preset.style,
+          ),
     options: { complexity: preset.complexity },
     globals: {},
     layers: null,

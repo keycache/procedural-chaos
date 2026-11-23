@@ -386,12 +386,13 @@ The engine in `src/engines/mandala/` is framework-free:
 - `symmetry.ts`: rotation and vertical reflection of endpoints **and** Bezier control points.
 - `boundaries.ts`: closed ring separator contours and organizing shapes.
 - `generate.ts`: deterministic placement, ornamentation, transformations, symmetry expansion, and multiple-center composition.
-- `svg.ts`: black, unfilled SVG line art with stable coordinate precision, path IDs, layer IDs, and draw order.
+- `svg.ts`: SVG with stable coordinate precision, path IDs, layer IDs, and draw order. Band-based drawings remain black/unfilled; the opt-in floral family adds solid ink accents and foreground masks (4.11).
 
 The current strict recipe accepts:
 
 - `schemaVersion: 1`, `engineVersion: "0.2.0"`, seed, and a square canvas of 128-4096 units. Older engine-version recipes are rejected explicitly; project import/migrations do not exist yet.
 - Optional style blend with four finite 0-1 weights and at least one positive value.
+- Optional versioned bold-floral composition (4.11). Recipes without it retain their existing band-based generation and SVG serialization.
 - Structure: all five base geometries, polygon sides (3-24), symmetry type/order (1-48), one to four centers, and 0-1 broken symmetry.
 - Global stroke width, irregularity, density (0-1, default 0.5), and negative space (0-1, default 0). The additional fields have neutral defaults for older recipes from this engine version.
 - Up to 12 layers using ring, grid, spiral, branching, tessellation, or scatter, with ID, enabled flag, motif, inner/outer radii, count, scale, rotation offset, width/curvature/point parameters, and seed offset.
@@ -408,7 +409,7 @@ Generation rules:
 - Polygon side/star point counts round up to a multiple of N in radial modes so separator boundaries share the motifs' symmetry.
 - Circle, polygon, star, and seeded freeform separator contours are sampled as closed polylines, using at least 192 samples and a sample count divisible by N. This is a lightweight geometry-core approximation, not an exact analytic curve representation.
 - Spiral organizing geometry keeps closed circular separators and adds Archimedean spiral guides within each ring, expanded by the same symmetry operations. The independent spiral distribution advances placements radially and angularly within each sector.
-- The legacy `createStarterRecipe` keeps decorative arcs and spiral guides open. Style-planned recipes close every subpath, including those decorations, with chords where necessary.
+- The legacy `createStarterRecipe` keeps decorative arcs and spiral guides open. Band-style-planned recipes close every subpath, including those decorations, with chords where necessary. Floral drawing roles intentionally preserve open decorative strokes.
 - Shared ring boundaries are emitted once. Geometry IDs and draw order are stable for a given recipe.
 
 The Mandala Studio renders the worker-generated SVG as an image on a white canvas, with style/blend, complexity, geometry, placement, growth, appearance, and layer controls plus zoom/pan. The preview stays sticky alongside desktop settings; narrow layouts remain stacked. Save/export and the local Library are implemented as described in 4.10. The Video Studio retains its static placeholder and independent state.
@@ -471,6 +472,20 @@ The editor uses an explicit document containing name, seed, style/blend, planner
 - **Library:** saved mandala thumbnails, names, seeds, and timestamps with explicit reopen actions. Reopen validates data, restores the document/ID, clears undo/redo, and regenerates off-thread. Unsupported/corrupt data and storage failures are reported, not silently skipped. Imported-artwork/video-project counts remain placeholders.
 
 Validation includes preset distinctness, undo/redo round trips, structural versus appearance changes, layer operations, metadata escaping, recipe reproduction, worker cancellation/crash/timeout cleanup, and persistence across connections. Browser checks additionally verify exact SVG after Library refresh/reopen, real exported SVG/JSON contents, PNG dimensions/transparency, and last-edit-wins generation.
+
+### 4.11 Implemented bold-floral composition
+
+**Floral flourish** is an additional opt-in preset, exposed as **bold-floral** in the style selector. It is a separate art-directed composition, not a fifth blend weight. The four existing style weights and their hybrid behavior are unchanged.
+
+- **Recipe:** retains schema version 1 and engine version `0.2.0` with additive optional `composition: { family: "bold-floral", version: 1, complexity: number }`. Complexity is stored explicitly in the engine recipe (0-1). The family requires empty `layers`, one freeform center, rotational symmetry at 6/8/10/12 divisions, no broken symmetry, and neutral density/negative-space/irregularity. Stroke width remains configurable. Unsupported family versions and incompatible ring/structure settings are errors.
+- **Editor:** the document's mode is `bold-floral`; complexity and optional symmetry order materialize the complete composition recipe. The traditional blend is a compatibility descriptor, not a way to mix composition planners. Switching modes resets structural/global overrides and custom layers using the existing undoable action. Ring/layer, hybrid, distribution, and growth controls are replaced with floral divisions and stroke width. Existing seed, preset matching, history, saving, and export controls still apply.
+- **Geometry:** `bold-floral.ts` constructs whole cubic-Bezier crown silhouettes crossing radial bands, large nested leaves with contour-aligned border hatching, paired spiral tendrils, two interleaved central petal crowns, and tapered black accents. No circular separator boundaries are added. Seeded fullness, crown/leaf height, leaf-tip bend, and curl turns vary coherently across rotational copies; widths adapt to sector count.
+- **Detail budget:** fixed divisions and bounded ornament counts keep the family below 1,500 drawing paths at maximum detail. Complexity changes beads/hatches and optional fine outlines/curls while preserving primary silhouettes. Coordinates use a 0.465-canvas-size radius; strokes scale from a 1000-unit design, defaulting to 2.5 units for primary contours with relative bold/fine weights.
+- **Drawing roles:** new geometry paths carry `region-boundary`, `decoration`, or `solid-accent` roles. Region boundaries and solid accents are closed; decorative curls/veins/hatches may remain open. Roles and foreground flags export as `data-role` and `data-occludes`; metadata declares the roles and occlusion strategy. Existing paths do not acquire new attributes, preserving legacy serialization.
+- **Occlusion:** contiguous drawing groups render back-to-front. Each rear group has an SVG luminance mask subtracting later groups' closed foreground silhouettes. This removes covered rear outlines and decoration rather than painting foreground interiors white. Only solid accents use black fills. This prototype does not Boolean-flatten geometry or solve arbitrary overlaps within a group.
+- **Outputs/persistence:** SVG masks remain in vector exports and are rasterized by the browser for PNG. Transparent exports retain transparency inside otherwise unpainted petals. Complete composition recipes round-trip through JSON and validated IndexedDB project payloads; older band-based documents/recipes need no migration.
+
+Geometry checks cover deterministic output, seeded variation, rotational copies, finite/in-canvas coordinates, bounded detail, role-specific closure, mask references, and unsupported settings. Editor/output checks cover family switching with undo, preset identification, exact recipe reproduction, and save/reopen. The user-facing visual checks are in Phase 3.1 of the plan. General-purpose shape-aware decoration, ornate lotus crowns, and swirling paisley planning remain Phases 3.2–3.4; Part 2 region detection is not implemented. Drawing roles and closed contours alone are not a guarantee of correct raster coloring regions.
 
 ---
 

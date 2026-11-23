@@ -134,7 +134,9 @@ export function MandalaStudio() {
       settings={
         <>
           <StyleControls recipe={plan.recipe} />
-          <LayerControls layers={layers ?? plan.recipe?.layers ?? []} />
+          {mode !== 'bold-floral' && (
+            <LayerControls layers={layers ?? plan.recipe?.layers ?? []} />
+          )}
           <ExportControls
             recipe={ready ? plan.recipe : undefined}
             svg={ready?.svg}
@@ -163,7 +165,7 @@ export function MandalaStudio() {
             <Preview
               label={
                 ready
-                  ? `${mode.toUpperCase()} / ${ready.pathCount} CLOSED PATHS`
+                  ? `${mode.toUpperCase()} / ${ready.pathCount} ${mode === 'bold-floral' ? 'PATHS' : 'CLOSED PATHS'}`
                   : 'GENERATING IN A WORKER'
               }
             >
@@ -189,15 +191,27 @@ export function MandalaStudio() {
                 className="text-xs leading-relaxed text-muted-foreground"
                 aria-live="polite"
               >
-                {plan.recipe.layers.filter((layer) => layer.enabled).length}{' '}
-                active bands / {plan.recipe.structure.centers}{' '}
-                {plan.recipe.structure.centers === 1 ? 'center' : 'centers'} /{' '}
-                {plan.recipe.structure.centers > 1 ||
-                plan.recipe.structure.brokenSymmetry > 0
-                  ? 'Intentionally broken global symmetry'
-                  : `${plan.recipe.structure.symmetryType} symmetry`}
-                {' / '}
-                {layers ? 'Custom layers' : 'Style guided'} / 200 ms debounce
+                {mode === 'bold-floral' ? (
+                  <>
+                    Floral crowns / {plan.recipe.structure.symmetryOrder}-fold
+                    rotational symmetry / outlines, decorative strokes & ink
+                    accents
+                  </>
+                ) : (
+                  <>
+                    {plan.recipe.layers.filter((layer) => layer.enabled).length}{' '}
+                    active bands / {plan.recipe.structure.centers}{' '}
+                    {plan.recipe.structure.centers === 1 ? 'center' : 'centers'}{' '}
+                    /{' '}
+                    {plan.recipe.structure.centers > 1 ||
+                    plan.recipe.structure.brokenSymmetry > 0
+                      ? 'Intentionally broken global symmetry'
+                      : `${plan.recipe.structure.symmetryType} symmetry`}
+                    {' / '}
+                    {layers ? 'Custom layers' : 'Style guided'}
+                  </>
+                )}
+                {' / '}200 ms debounce
               </p>
             )}
           </div>

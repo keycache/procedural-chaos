@@ -12,6 +12,8 @@ export type GeometryPath = {
   d: PathCommand[];
   strokeWidth: number;
   drawOrder: number;
+  role?: 'region-boundary' | 'decoration' | 'solid-accent';
+  occludes?: boolean;
 };
 
 export type GeometryModel = {
