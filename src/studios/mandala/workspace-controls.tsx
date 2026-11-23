@@ -1,14 +1,15 @@
 import { Shuffle } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { presets } from './editor';
+import { matchingPresetId, presets } from './editor';
 import { selectClass } from './style-controls';
 import { useMandalaStore } from './store';
 import { ControlLabel } from '../../components/control-label';
 
 export function WorkspaceControls() {
-  const { name, setName, setSeed, seedHistory, applyPreset, projectId } =
-    useMandalaStore();
+  const state = useMandalaStore();
+  const { name, setName, setSeed, seedHistory, applyPreset, projectId } = state;
+  const presetId = matchingPresetId(state);
   return (
     <div className="space-y-4 border-b border-border p-5">
       <label className="block space-y-2 text-sm">
@@ -36,11 +37,11 @@ export function WorkspaceControls() {
         <select
           aria-label="Composition preset"
           className={selectClass}
-          value=""
+          value={presetId}
           onChange={(event) => applyPreset(event.target.value)}
         >
           <option value="" disabled>
-            Choose a starting point
+            Custom composition
           </option>
           {presets.map((preset) => (
             <option key={preset.id} value={preset.id}>

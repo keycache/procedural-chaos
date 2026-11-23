@@ -18,7 +18,7 @@ export function Preview({
   return (
     <section
       aria-label="Artwork preview"
-      className="flex min-h-120 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card/30"
+      className={`flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card/30 ${children ? '' : 'min-h-120'}`}
     >
       <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
         <span className="text-xs font-medium text-muted-foreground">
@@ -58,7 +58,11 @@ export function Preview({
         </div>
       </div>
       <div
-        className="canvas-grid relative flex min-h-110 flex-1 touch-none items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing"
+        className={`canvas-grid relative flex touch-none items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing ${
+          children
+            ? 'h-[min(80vw,32rem)] [container-type:size] lg:h-[calc(100dvh-16rem)] lg:min-h-64'
+            : 'min-h-110 flex-1'
+        }`}
         onPointerDown={(event) => {
           if (event.button !== 0) return;
           event.currentTarget.setPointerCapture(event.pointerId);
@@ -82,7 +86,11 @@ export function Preview({
         }}
       >
         <div
-          className={`${children ? 'w-110' : 'w-80'} max-w-[80%] text-primary/70`}
+          className={`shrink-0 text-primary/70 ${
+            children
+              ? 'w-[min(calc(100cqw-2rem),calc(100cqh-2rem))]'
+              : 'w-80 max-w-[80%]'
+          }`}
           style={{
             transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
           }}

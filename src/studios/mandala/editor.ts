@@ -144,3 +144,23 @@ export function presetDocument(id: string): EditorDocument {
     layers: null,
   };
 }
+
+export function matchingPresetId(document: EditorDocument): string {
+  if (
+    document.layers !== null ||
+    Object.keys(document.globals).length > 0 ||
+    Object.keys(document.options).length !== 1
+  )
+    return '';
+  return (
+    presets.find((preset) => {
+      const expected = presetDocument(preset.id);
+      return (
+        document.seed === expected.seed &&
+        document.mode === expected.mode &&
+        document.options.complexity === expected.options.complexity &&
+        styles.every((style) => document.blend[style] === expected.blend[style])
+      );
+    })?.id ?? ''
+  );
+}

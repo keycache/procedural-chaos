@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { singleStyle } from '../../engines/mandala/styles';
-import { useMandalaStore } from './store';
-import { editorRecipe, presets } from './editor';
+import { editorSnapshot, useMandalaStore } from './store';
+import { editorRecipe, matchingPresetId, presets } from './editor';
 import { renderSvg } from '../../engines/mandala/svg';
 import { generateMandala } from '../../engines/mandala/generate';
 
@@ -89,6 +89,33 @@ describe('style editor state', () => {
     expect(
       new Set(recipes.map((recipe) => renderSvg(generateMandala(recipe)))).size,
     ).toBe(presets.length);
+  });
+
+  it('identifies selected presets and keeps the selection aligned with edits, history, and reopened projects', () => {
+    const state = useMandalaStore.getState();
+    for (const preset of presets) {
+      state.applyPreset(preset.id);
+      expect(matchingPresetId(useMandalaStore.getState())).toBe(preset.id);
+    }
+    state.setName('My renamed project');
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('wild');
+    const saved = editorSnapshot(useMandalaStore.getState());
+    state.setSeed('custom-seed');
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('');
+    state.undo();
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('wild');
+    state.redo();
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('');
+    state.openProject(saved, 'saved-preset');
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('wild');
+    state.setGlobals({ density: 0.8 });
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('');
+    state.undo();
+    state.setOptions({ twist: 0.3 });
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('');
+    state.undo();
+    state.addLayer();
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('');
   });
 
   it('adds, duplicates, reorders, disables and removes layers without corrupting radial ordering', () => {
