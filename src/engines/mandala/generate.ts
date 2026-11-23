@@ -103,7 +103,23 @@ export function generateMandala(input: unknown): GeometryModel {
       });
     };
 
-    for (const layer of recipe.layers) {
+    for (const original of recipe.layers) {
+      const spacing = 1 - recipe.global.negativeSpace * 0.65;
+      const layer = {
+        ...original,
+        count: Math.min(
+          192,
+          Math.max(
+            1,
+            Math.round(original.count * (0.5 + recipe.global.density)),
+          ),
+        ),
+        scale: original.scale * spacing,
+        motifParams: {
+          ...original.motifParams,
+          width: original.motifParams.width * spacing,
+        },
+      };
       if (!layer.enabled) continue;
       for (const radius of [layer.innerRadius, layer.outerRadius]) {
         if (boundaries.has(radius)) continue;

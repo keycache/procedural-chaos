@@ -356,7 +356,7 @@ type GeometryModel = {
 
 - **SVG renderer:** generates an SVG string directly from the geometry model without one React component per shape. Used for the preview and exports.
 - **Canvas renderer:** optional fast preview for very dense mandalas or while a slider is being dragged.
-- Generation will run in a worker with debounced slider changes and stale-result rejection in Phase 3. The current bounded preview is synchronous.
+- Generation and SVG serialization run in a module worker after a 200 ms debounce. Each obsolete request is aborted/terminated and its result is rejected; no stale image is presented as current output.
 
 ### 4.6 Controls
 
@@ -393,7 +393,7 @@ The current strict recipe accepts:
 - `schemaVersion: 1`, `engineVersion: "0.2.0"`, seed, and a square canvas of 128-4096 units. Older engine-version recipes are rejected explicitly; project import/migrations do not exist yet.
 - Optional style blend with four finite 0-1 weights and at least one positive value.
 - Structure: all five base geometries, polygon sides (3-24), symmetry type/order (1-48), one to four centers, and 0-1 broken symmetry.
-- Global stroke width and irregularity.
+- Global stroke width, irregularity, density (0-1, default 0.5), and negative space (0-1, default 0). The additional fields have neutral defaults for older recipes from this engine version.
 - Up to 12 layers using ring, grid, spiral, branching, tessellation, or scatter, with ID, enabled flag, motif, inner/outer radii, count, scale, rotation offset, width/curvature/point parameters, and seed offset.
 - Layer recursion depth (0-3), recursive scaling (0.35-0.8), twist (radians), distortion/noise/ornament (0-1), and stroke multiplier (0.4-2). Neutral defaults preserve the simple starter recipe.
 
@@ -411,7 +411,7 @@ Generation rules:
 - The legacy `createStarterRecipe` keeps decorative arcs and spiral guides open. Style-planned recipes close every subpath, including those decorations, with chords where necessary.
 - Shared ring boundaries are emitted once. Geometry IDs and draw order are stable for a given recipe.
 
-The Mandala Studio renders the SVG as an image on a white canvas, with style/blend, complexity, geometry, placement, and growth controls plus zoom/pan. This bounded preview generates synchronously; worker-based generation, the full layer editor, save/export, and export metadata arrive in Phase 3. The Video Studio retains its static placeholder and independent state.
+The Mandala Studio renders the worker-generated SVG as an image on a white canvas, with style/blend, complexity, geometry, placement, growth, appearance, and layer controls plus zoom/pan. The preview stays sticky alongside desktop settings; narrow layouts remain stacked. Save/export and the local Library are implemented as described in 4.10. The Video Studio retains its static placeholder and independent state.
 
 Example:
 
@@ -448,11 +448,29 @@ Blend weights normalize before planning. Continuous properties (irregularity, or
 
 Complexity is a planner input rather than a stored global recipe field: it creates 3-5 broad bands alternating with narrow borders (6-10 layers total), determines recursion tendency, and increases repetitions in detailed outer bands. Radii occupy 0.035-0.9 of the canvas radius with varying widths. Border distributions remain rings when a user overrides main-band distribution/recursion. Ornamental ring contours follow the annulus for broader, less stamp-like compositions; nested outlines and closed vein ribbons use finer strokes.
 
-Recursion adds scaled inset outlines around a motif's midpoint. The fixed planner multiplier is 0.62 (editable in engine recipes); the signed UI twist range is -1 to 1, applied as `twist × depth × 0.35` radians. Twist therefore needs a nonzero recursion depth to be visible. Branching also uses depth to grow a binary placement tree, capped at three branching levels. Noise/distortion transform endpoints and Bezier controls coherently before symmetry expansion. Independent random streams derive from seed/layer ID/offset and, for multiple centers, center index.
+Recursion adds scaled inset outlines around a motif's midpoint. The planner multiplier is 0.62 (editable per layer); the signed global UI twist range is -1 to 1, applied as `twist × depth × 0.35` radians. Twist therefore needs a nonzero recursion depth to be visible. Branching also uses depth to grow a binary placement tree, capped at three branching levels. Noise/distortion transform endpoints and Bezier controls coherently before symmetry expansion. Independent random streams derive from seed/layer ID/offset and, for multiple centers, center index.
 
 Several centers place scaled rosettes at deterministic offsets. `GeometryModel.symmetry` reports `none`, order 1, when multiple centers or deliberate perturbation make a global symmetry claim unsafe; local rosettes still use the chosen expansion. Stroke widths scale with the rosettes. A 24,000-path hard limit throws a visible error instead of truncating or silently falling back.
 
 Styled subpaths are closed and individually suitable for enclosing coloring regions. Intersections, overlaps between rosettes, tiny details, and uneven region sizes are intentional rough edges; this is not a Boolean polygon solver. Raster region detection, minimum-area filtering, and corrections remain in Part 2. Automated checks cover reproducibility, normalization, overrides, all distributions, exact dihedral symmetry after transformations, closure, finite/bounded default output, recursion limits, excessive-scene errors, and editor recovery.
+
+### 4.10 Implemented editor, outputs, and local projects
+
+The editor uses an explicit document containing name, seed, style/blend, planner options, global appearance overrides, and optional custom layers. `editorRecipe` materializes and validates a complete engine recipe. Presets cover traditional, geometric, organic, abstract, 70/30 traditional/geometric, and 45/55 geometric/organic compositions.
+
+- **History:** up to 100 immutable edit snapshots with undo/redo; a new edit clears the redo branch. The 12 most recent successful seeds are deduplicated and reusable. These histories are in-memory, not persisted across refreshes.
+- **Layer editing:** ID, radial order, and independent seed streams are preserved. Add/duplicate use unique IDs; add/remove distribute widths across radii 0.035-0.9 with a 0.02 minimum. Reordering exchanges layer contents between existing radial slots. Direct radial edits remain strictly validated (ordered/non-overlapping). Invalid edits retain their controls and offer undo/reset.
+- **Replanning:** style, blend, complexity, structure, and global growth options replace custom layers; the UI explains this and undo can recover them. Appearance overrides preserve layers.
+- **Density:** effective requested count is `round(layer.count × (0.5 + density))`, limited to 1-192 before distribution/orbit rounding. Branching retains its depth-driven placement tree. Negative space scales motif dimensions by `1 - 0.65 × negativeSpace`; it does not move separator boundaries. Stroke width and irregularity are independent overrides.
+- **Worker lifecycle:** each settled recipe starts a typed Comlink module worker after 200 ms; changes cancel the timer or terminate its worker. Request keys plus abort guards prevent obsolete completion from replacing current state. Success, failure, cancellation, and a 15-second timeout release/terminate the worker. Pending/error states disable save/export rather than exporting a previous image.
+- **Preview:** SVG is generated as a string off-thread and displayed in an image, not one React element per path. There is no separate Canvas preview renderer because the bounded SVG preview is sufficient here. The geometry path limit remains 24,000.
+- **SVG:** XML-safe JSON metadata embeds the complete engine recipe, center(s), and effective global symmetry; paths retain `id`, `data-layer`, and `data-draw-order`. White/transparent backgrounds are selectable. Exact metadata can be used by the future Video Studio.
+- **PNG:** asynchronous image decoding and Canvas 2D encoding produce square files at the selected 1024/2048/4096/8192 resolution. Transparent/white backgrounds are explicit; object URLs and canvas backing memory are released after export. Unsupported contexts/encoding failures surface errors.
+- **JSON:** a validated, pretty-printed engine recipe, including engine/schema versions, complete layers, and globals. It reproduces geometry exactly, but is not an editor-history archive. JSON import remains a future UI enhancement.
+- **Persistence:** the existing IndexedDB `mandalas` store holds ID/name/timestamps and a version-1 payload containing validated editor document, exact materialized recipe, and preview SVG. The document/recipe pair must agree. Save updates a loaded/saved ID while preserving creation time; Save a copy creates another ID. Unsaved edits are not auto-persisted.
+- **Library:** saved mandala thumbnails, names, seeds, and timestamps with explicit reopen actions. Reopen validates data, restores the document/ID, clears undo/redo, and regenerates off-thread. Unsupported/corrupt data and storage failures are reported, not silently skipped. Imported-artwork/video-project counts remain placeholders.
+
+Validation includes preset distinctness, undo/redo round trips, structural versus appearance changes, layer operations, metadata escaping, recipe reproduction, worker cancellation/crash/timeout cleanup, and persistence across connections. Browser checks additionally verify exact SVG after Library refresh/reopen, real exported SVG/JSON contents, PNG dimensions/transparency, and last-edit-wins generation.
 
 ---
 

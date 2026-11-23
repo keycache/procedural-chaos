@@ -1,5 +1,6 @@
 import type { GeometryModel, PathCommand } from './geometry';
 import type { Point } from '../../shared/geometry';
+import type { MandalaRecipe } from './recipe';
 
 function number(value: number): string {
   if (!Number.isFinite(value))
@@ -43,12 +44,25 @@ export function serializePath(commands: PathCommand[]): string {
     .join(' ');
 }
 
-export function renderSvg(model: GeometryModel): string {
+export function renderSvg(
+  model: GeometryModel,
+  recipe?: MandalaRecipe,
+): string {
+  const metadata = recipe
+    ? `<metadata>${escapeAttribute(
+        JSON.stringify({
+          recipe,
+          center: model.center,
+          centers: model.centers,
+          symmetry: model.symmetry,
+        }),
+      )}</metadata>`
+    : '';
   const paths = model.paths
     .map(
       (path) =>
         `<path id="${escapeAttribute(path.id)}" data-layer="${escapeAttribute(path.layerId)}" data-draw-order="${path.drawOrder}" d="${serializePath(path.d)}" stroke-width="${number(path.strokeWidth)}"/>`,
     )
     .join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${number(model.size)} ${number(model.size)}" width="${number(model.size)}" height="${number(model.size)}"><g fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round">${paths}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${number(model.size)} ${number(model.size)}" width="${number(model.size)}" height="${number(model.size)}">${metadata}<g fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round">${paths}</g></svg>`;
 }

@@ -8,7 +8,7 @@ import type { MandalaRecipe } from '../../engines/mandala/recipe';
 import { Button } from '../../components/ui/button';
 import { useMandalaStore } from './store';
 
-const selectClass =
+export const selectClass =
   'h-9 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50';
 const descriptions = {
   traditional:
@@ -22,7 +22,7 @@ const descriptions = {
     'Combine style rules. Weights are normalized; they do not have to add up to 100%.',
 };
 
-function RangeControl({
+export function RangeControl({
   label,
   value,
   onChange,
@@ -70,6 +70,8 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
     setWeight,
     setOptions,
     resetOverrides,
+    globals,
+    setGlobals,
   } = useMandalaStore();
   const total = Object.values(blend).reduce((sum, value) => sum + value, 0);
   return (
@@ -127,6 +129,37 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
         value={options.complexity ?? 0.65}
         onChange={(complexity) => setOptions({ complexity })}
       />
+      <details className="border-t border-border pt-4">
+        <summary className="cursor-pointer text-sm font-medium">
+          Global appearance
+        </summary>
+        <div className="mt-5 space-y-5">
+          <RangeControl
+            label="Density"
+            value={globals.density ?? recipe?.global.density ?? 0.5}
+            onChange={(density) => setGlobals({ density })}
+          />
+          <RangeControl
+            label="Negative space"
+            value={globals.negativeSpace ?? recipe?.global.negativeSpace ?? 0}
+            onChange={(negativeSpace) => setGlobals({ negativeSpace })}
+          />
+          <RangeControl
+            label="Irregularity"
+            value={globals.irregularity ?? recipe?.global.irregularity ?? 0}
+            onChange={(irregularity) => setGlobals({ irregularity })}
+          />
+          <RangeControl
+            label="Stroke width"
+            value={globals.strokeWidth ?? recipe?.global.strokeWidth ?? 1.8}
+            min={0.25}
+            max={8}
+            step={0.25}
+            percent={false}
+            onChange={(strokeWidth) => setGlobals({ strokeWidth })}
+          />
+        </div>
+      </details>
       <details className="border-t border-border pt-4" open>
         <summary className="cursor-pointer text-sm font-medium">
           Geometry & placement
@@ -306,8 +339,8 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
       </Button>
       <p className="text-xs leading-relaxed text-muted-foreground">
         Narrow bands stay ornamental borders. Distribution and recursion
-        overrides affect the main bands. Full layer editing and exports are
-        still upcoming.
+        overrides affect the main bands. Style, blend, complexity, and structure
+        changes rebuild custom layers; global appearance controls preserve them.
       </p>
     </div>
   );

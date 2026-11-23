@@ -60,7 +60,7 @@ export const styleBlendSchema = z
     message: 'Give at least one style a positive weight.',
   });
 
-const layerSchema = z
+export const layerSchema = z
   .strictObject({
     id: z.string().regex(/^[a-z][a-z0-9-]*$/),
     enabled: z.boolean(),
@@ -108,6 +108,8 @@ export const mandalaRecipeSchema = z
     global: z.strictObject({
       irregularity: fraction,
       strokeWidth: z.number().finite().min(0.25).max(8),
+      density: fraction.default(0.5),
+      negativeSpace: fraction.default(0),
     }),
     layers: z.array(layerSchema).min(1).max(12),
   })
@@ -204,7 +206,12 @@ export function createStarterRecipe(
       centers: 1,
       brokenSymmetry: 0,
     },
-    global: { irregularity: 0.3, strokeWidth: 1.5 },
+    global: {
+      irregularity: 0.3,
+      strokeWidth: 1.5,
+      density: 0.5,
+      negativeSpace: 0,
+    },
     layers: ringMotifs.map((motif, index) => ({
       id: `ring-${index + 1}`,
       enabled: true,

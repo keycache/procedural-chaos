@@ -79,7 +79,7 @@ const biases: Record<
   },
 };
 
-const optionsSchema = z.strictObject({
+export const styleOptionsSchema = z.strictObject({
   seed: seedSchema,
   blend: styleBlendSchema,
   complexity: z.number().finite().min(0).max(1).default(0.65),
@@ -95,7 +95,7 @@ const optionsSchema = z.strictObject({
   distortion: z.number().finite().min(0).max(1).optional(),
 });
 
-export type StyleOptions = z.input<typeof optionsSchema>;
+export type StyleOptions = z.input<typeof styleOptionsSchema>;
 
 export function singleStyle(style: Style): StyleBlend {
   return { traditional: 0, geometric: 0, organic: 0, abstract: 0, [style]: 1 };
@@ -153,7 +153,7 @@ function chooseStyle(weights: StyleBlend, random: () => number): Style {
 }
 
 export function createStyleRecipe(input: StyleOptions): MandalaRecipe {
-  const options = optionsSchema.parse(input);
+  const options = styleOptionsSchema.parse(input);
   const style = resolveStyle(options.blend);
   const { dominant, weights } = style;
   const abstract = weights.abstract;

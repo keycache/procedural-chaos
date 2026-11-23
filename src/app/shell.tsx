@@ -109,7 +109,7 @@ export function Shell() {
           </nav>
           <Badge variant="outline" className="gap-2 px-3 py-1.5">
             <span className="size-1.5 rounded-full bg-primary" />
-            Phase 2
+            Phase 3
           </Badge>
         </div>
       </header>

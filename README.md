@@ -5,7 +5,7 @@ A client-side creative playground built with Vite, React, TypeScript, shadcn/ui,
 - **Mandala Studio:** deterministic traditional, geometric, organic, abstract, and hybrid mandala line art.
 - **Video Studio:** planned automated coloring videos using generated or imported artwork.
 
-Phase 2 adds style-guided compositions and normalized hybrid blending, with nested ornamentation, beaded borders, six distributions, recursive motifs, transformations, and multiple focal centers. Geometry, symmetry, distribution, and growth controls override the style suggestions. Video creation, the full layer editor, project saving, and artwork exports are still planned.
+Phase 3 adds a complete Mandala Studio workflow: six curated presets, random seeds and recent-seed history, global appearance and per-layer controls, undo/redo, background generation, SVG/PNG/JSON exports, and local project save/reopen. The engine includes four styles and hybrids, nested ornamentation, six distributions, recursive motifs, and multiple focal centers. Video creation remains planned.
 
 Open `#/mandala` to try the generator. Identical seeds and settings produce identical line art. The Video Studio remains a placeholder; the landing page still offers the local-storage and Web Worker smoke tests.
 
@@ -19,8 +19,14 @@ No backend, accounts, or server-side processing are required. Desktop Chrome or 
 4. Under **Geometry & placement**, try a different base, symmetry, distribution, or number of focal centers. Explicit choices override style defaults. Narrow ornamental borders remain rings.
 5. Expand **Growth & transformations** and try recursion, twist, distortion, noise, and broken symmetry. Broken symmetry and multiple centers are labeled as not globally symmetric. **Restore style defaults** clears overrides; selecting a new style also clears them.
 6. Zoom, drag to pan, and reset the view. On desktop, the preview stays beside the settings as you scroll; smaller screens keep the stacked layout. Video Studio remains an independent placeholder.
+7. Choose a **Composition preset**, then **Randomize seed** or reuse a **Recent seed**. The six presets cover every style and two hybrids. Recent seeds and undo/redo are tab-session state, not permanent storage.
+8. Under **Global appearance**, vary density, negative space, irregularity, and stroke width. In **Layers**, add, duplicate, move, enable/disable, or remove bands; edit motifs, placement, radial bounds, and detail settings. Undo/redo must restore the exact drawing. Invalid layer edits show an error without hiding the editable controls.
+9. Give the project a name and **Save project**. Open **Library**, refresh, and reopen it: the exact custom recipe and drawing should return. Subsequent saves update that project; **Save a copy** creates another. Unsaved tab edits are lost on refresh.
+10. At the bottom of the settings, export **SVG**, **PNG**, and **JSON**. SVG includes recipe and geometry metadata. Choose PNG sizes from 1024 to 8192 pixels and white/transparent backgrounds. JSON is the exact engine recipe; JSON import is not yet a UI feature.
 
-Styled paths are closed and can enclose coloring regions, but dense intersections and tiny details are not automatically simplified. Generation is currently synchronous and capped at 24,000 paths with an explicit error; worker/debounced generation arrives with the full editor.
+Style, blend, complexity, and structure/growth changes rebuild custom layers; global appearance changes preserve them. Adding/removing bands redistributes widths; moving swaps bands between radial slots. Use undo to recover an earlier composition.
+
+Styled paths are closed and can enclose coloring regions, but dense intersections and tiny details are not automatically simplified. Generation uses a Web Worker with a 200 ms debounce, cancellation/stale-result rejection, a 15-second timeout, and a 24,000-path limit. Pending/error previews never silently export old artwork. Very large PNGs require more browser memory.
 
 ## Prerequisites
 
@@ -141,7 +147,7 @@ npm run format      # Format application and configuration files
 
 ## Local storage
 
-Projects and settings are designed to stay in your browser's IndexedDB database. Phase 0 supports saving the smoke-test seed; project collections are initially empty.
+Saved mandalas and settings stay in your browser's IndexedDB database. The Library lists saved mandalas with previews and reopens their exact editor state. Imported-artwork and video-project collections remain placeholders; the smoke-test seed is still supported. Save explicitly before refreshing or closing the tab.
 
 Storage is specific to the browser and origin. Local development, local preview, and GitHub Pages do not share the same library. Clearing site data removes locally stored settings and projects.
 

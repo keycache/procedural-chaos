@@ -151,6 +151,22 @@ Minimal style, blend, complexity, placement, and growth controls are included no
 
 **Done when:** a user can create, tune, save, reload, and export mandalas without UI freezes.
 
+**Implemented locally:** the studio includes six curated presets (four styles/two hybrids), seed randomization and 12-entry recent history, global density/negative-space/irregularity/stroke controls, and editable layers with add/duplicate/remove/reorder/enable operations. A 100-edit undo/redo history restores exact documents. Style/structure changes rebuild custom layers with explicit UI guidance; appearance changes retain them. Added/removed bands redistribute radial widths; moving swaps radial slots.
+
+Generation and SVG serialization run in cancellable module workers after a 200 ms debounce; obsolete results are rejected, errors are visible, and stalled workers time out after 15 seconds. The SVG image preview remains responsive without a separate Canvas preview renderer. The existing desktop sticky preview is retained.
+
+SVG exports include recipe/center/symmetry metadata and path draw order; PNG supports 1024/2048/4096/8192 pixels and white/transparent backgrounds; JSON exports the exact engine recipe. Named projects save to IndexedDB with previews and complete editor state. Library reopen survives refresh; Save updates an existing project and Save a copy creates a new one. Undo/recent-seed history are session-only. JSON import and library delete/management are not implemented in this slice. No commits or deployments are performed by the assistant.
+
+**UI checks:**
+
+1. Select all six composition presets, randomize seeds, and reuse recent seeds. Expect distinct artwork and exact repetition with the same settings.
+2. Expand global appearance and compare density, negative space, irregularity, and stroke width. Adjust sliders quickly: controls should remain usable and only the latest recipe should appear after generation.
+3. Edit a layer's motif, distribution, repetitions, scale, radial bounds, and detail. Add/duplicate/move/disable/remove layers, then undo/redo. Expect custom geometry to change and exact prior drawings to return. Invalid radial/count settings show errors and remain editable.
+4. Scroll down to layer and export controls on desktop; expect the preview to remain visible. Narrow layouts remain stacked.
+5. Name and save a custom design, visit Library, refresh, and reopen. Expect identical artwork and editor settings; Save updates one card, while Save a copy adds another.
+6. Export SVG/JSON and compare their recipes. Export white and transparent PNGs at different selected sizes; expect matching square dimensions, correct backgrounds, and unchanged geometry. Exports/save are disabled during pending or failed generation.
+7. Verify Video Studio remains an independent placeholder and the foundation worker/storage tests still work.
+
 ---
 
 ## Phase 4 — Part 2: Import and region detection

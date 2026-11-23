@@ -12,6 +12,8 @@ type StudioProps = {
   setSeed: (seed: string) => void;
   settings?: ReactNode;
   preview?: ReactNode;
+  actions?: ReactNode;
+  workspace?: ReactNode;
 };
 
 export function StudioPlaceholder({
@@ -20,6 +22,8 @@ export function StudioPlaceholder({
   setSeed,
   settings,
   preview,
+  actions,
+  workspace,
 }: StudioProps) {
   const isVideo = kind === 'video';
   const title = isVideo ? 'Video Studio' : 'Mandala Studio';
@@ -47,7 +51,7 @@ export function StudioPlaceholder({
             <Icon className="size-4 text-primary" />
             <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
             <Badge variant="outline">
-              {preview ? 'Styles & hybrid blending' : 'Foundation preview'}
+              {preview ? 'Mandala editor' : 'Foundation preview'}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -56,18 +60,20 @@ export function StudioPlaceholder({
               : 'Start with a seed. Shape the possibilities.'}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            disabled
-            title="Project saving arrives with the studio editor."
-          >
-            <Save /> Save project
-          </Button>
-          <Button disabled title="Export arrives in a later phase.">
-            <Download /> {isVideo ? 'Export video' : 'Export artwork'}
-          </Button>
-        </div>
+        {actions ?? (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              disabled
+              title="Project saving arrives with the studio editor."
+            >
+              <Save /> Save project
+            </Button>
+            <Button disabled title="Export arrives in a later phase.">
+              <Download /> {isVideo ? 'Export video' : 'Export artwork'}
+            </Button>
+          </div>
+        )}
       </div>
       <div className="grid items-start gap-5 lg:grid-cols-[260px_1fr]">
         <aside
@@ -93,6 +99,7 @@ export function StudioPlaceholder({
             </p>
           </div>
           <Separator />
+          {workspace}
           {settings ??
             sections.map((section, index) => (
               <details
@@ -145,7 +152,7 @@ export function StudioPlaceholder({
           ) : (
             <p className="text-xs text-muted-foreground">
               {preview
-                ? 'Drag to pan and use the buttons to zoom. Saving, exports, and the full layer editor arrive in later phases.'
+                ? 'Drag to pan and use the buttons to zoom. Your library stays in this browser; export a JSON recipe for a portable backup.'
                 : 'Drag to pan, use the buttons to zoom. This illustration is a static UI study, not generated output.'}
             </p>
           )}
