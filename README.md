@@ -2,10 +2,12 @@
 
 A client-side creative playground built with Vite, React, TypeScript, shadcn/ui, and Tailwind CSS.
 
-- **Mandala Studio:** planned procedural mandala generation.
+- **Mandala Studio:** basic, deterministic mandala line-art generation.
 - **Video Studio:** planned automated coloring videos using generated or imported artwork.
 
-Currently, Phase 0 provides the application shell, studio placeholders, local browser storage, and a deterministic Web Worker smoke test. Mandala generation and video export are not implemented yet.
+Phase 1 adds a geometry engine and generated SVG preview to the Phase 0 foundation. The Mandala Studio lets you change the seed, base geometry, symmetry mode, and rotational divisions across six starter rings. Video creation, style blending, the full layer editor, project saving, and artwork exports are still planned.
+
+Open `#/mandala` to try the generator. Identical seeds and settings produce identical line art. The Video Studio remains a placeholder; the landing page still offers the local-storage and Web Worker smoke tests.
 
 No backend, accounts, or server-side processing are required. Desktop Chrome or Edge is recommended.
 

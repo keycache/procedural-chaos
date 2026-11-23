@@ -1,10 +1,16 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Maximize, Minus, Plus } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { clamp, type Point } from '../shared/geometry';
 import { MandalaIllustration } from './mandala-illustration';
 
-export function Preview() {
+export function Preview({
+  children,
+  label = 'STATIC PREVIEW / NOT GENERATED',
+}: {
+  children?: ReactNode;
+  label?: string;
+}) {
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
   const drag = useRef<Point | null>(null);
@@ -76,15 +82,15 @@ export function Preview() {
         }}
       >
         <div
-          className="w-80 max-w-[80%] text-primary/70"
+          className={`${children ? 'w-110' : 'w-80'} max-w-[80%] text-primary/70`}
           style={{
             transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
           }}
         >
-          <MandalaIllustration className="w-full" />
+          {children ?? <MandalaIllustration className="w-full" />}
         </div>
         <span className="pointer-events-none absolute bottom-4 left-4 rounded-md border border-border bg-background/90 px-3 py-2 font-mono text-[10px] tracking-wider text-muted-foreground">
-          STATIC PREVIEW / NOT GENERATED
+          {label}
         </span>
       </div>
     </section>

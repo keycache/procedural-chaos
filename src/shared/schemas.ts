@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const seedSchema = z
   .string()
   .trim()
-  .min(1, 'Enter a seed before running the test.')
+  .min(1, 'Enter a seed to continue.')
   .max(128, 'Seeds must be 128 characters or fewer.');
 
 export function createRecipeSchema<T extends z.ZodType>(parameters: T) {

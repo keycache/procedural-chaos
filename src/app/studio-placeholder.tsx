@@ -1,4 +1,5 @@
 import { Download, Flower2, Pause, Play, Save, Video } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -9,9 +10,17 @@ type StudioProps = {
   kind: 'mandala' | 'video';
   seed: string;
   setSeed: (seed: string) => void;
+  settings?: ReactNode;
+  preview?: ReactNode;
 };
 
-export function StudioPlaceholder({ kind, seed, setSeed }: StudioProps) {
+export function StudioPlaceholder({
+  kind,
+  seed,
+  setSeed,
+  settings,
+  preview,
+}: StudioProps) {
   const isVideo = kind === 'video';
   const title = isVideo ? 'Video Studio' : 'Mandala Studio';
   const Icon = isVideo ? Video : Flower2;
@@ -37,7 +46,9 @@ export function StudioPlaceholder({ kind, seed, setSeed }: StudioProps) {
           <div className="mb-2 flex items-center gap-2">
             <Icon className="size-4 text-primary" />
             <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-            <Badge variant="outline">Foundation preview</Badge>
+            <Badge variant="outline">
+              {preview ? 'Geometry core / Phase 1' : 'Foundation preview'}
+            </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
             {isVideo
@@ -53,7 +64,7 @@ export function StudioPlaceholder({ kind, seed, setSeed }: StudioProps) {
           >
             <Save /> Save project
           </Button>
-          <Button disabled title="Export is not implemented in Phase 0.">
+          <Button disabled title="Export arrives in a later phase.">
             <Download /> {isVideo ? 'Export video' : 'Export artwork'}
           </Button>
         </div>
@@ -76,32 +87,34 @@ export function StudioPlaceholder({ kind, seed, setSeed }: StudioProps) {
               />
             </label>
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-              Seed state is independent in each studio. Generation is coming in
-              a later phase.
+              {preview
+                ? 'Same seed and settings, same line art. This seed is independent of the Video Studio.'
+                : 'Seed state is independent in each studio. Generation is coming in a later phase.'}
             </p>
           </div>
           <Separator />
-          {sections.map((section, index) => (
-            <details
-              key={section}
-              className="border-b border-border last:border-0"
-              open={index === 0}
-            >
-              <summary className="cursor-pointer px-5 py-4 text-sm font-medium">
-                {section}
-              </summary>
-              <div className="px-5 pb-4 text-xs leading-relaxed text-muted-foreground">
-                {isVideo && index === 0
-                  ? 'SVG, PNG, JPG, and WebP import with region correction arrives in Phase 4.'
-                  : !isVideo && index === 0
-                    ? 'Traditional, geometric, organic, abstract, and hybrid styles arrive in Phases 1-3.'
-                    : 'These controls will become available as the engine is built.'}
-              </div>
-            </details>
-          ))}
+          {settings ??
+            sections.map((section, index) => (
+              <details
+                key={section}
+                className="border-b border-border last:border-0"
+                open={index === 0}
+              >
+                <summary className="cursor-pointer px-5 py-4 text-sm font-medium">
+                  {section}
+                </summary>
+                <div className="px-5 pb-4 text-xs leading-relaxed text-muted-foreground">
+                  {isVideo && index === 0
+                    ? 'SVG, PNG, JPG, and WebP import with region correction arrives in Phase 4.'
+                    : !isVideo && index === 0
+                      ? 'Traditional, geometric, organic, abstract, and hybrid styles arrive in Phases 1-3.'
+                      : 'These controls will become available as the engine is built.'}
+                </div>
+              </details>
+            ))}
         </aside>
         <div className="space-y-4">
-          <Preview />
+          {preview ?? <Preview />}
           {isVideo ? (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card/50 p-4">
               <div className="flex items-center gap-3">
@@ -131,8 +144,9 @@ export function StudioPlaceholder({ kind, seed, setSeed }: StudioProps) {
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Drag to pan, use the buttons to zoom. This illustration is a
-              static UI study, not generated output.
+              {preview
+                ? 'Drag to pan and use the buttons to zoom. Saving, exports, style blending, and the full layer editor arrive in later phases.'
+                : 'Drag to pan, use the buttons to zoom. This illustration is a static UI study, not generated output.'}
             </p>
           )}
         </div>

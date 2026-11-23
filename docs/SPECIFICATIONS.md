@@ -271,7 +271,7 @@ Generate intricate, coloring-ready mandala line art from parameters and a seed. 
 
 ### 4.2 Recipe model
 
-A mandala is fully described by a versioned recipe.
+A mandala is fully described by a versioned recipe. The following is the target model for the complete generator; the implemented Phase 1 subset is described in [4.8](#48-implemented-phase-1-geometry-core).
 
 ```ts
 type MandalaRecipe = {
@@ -366,6 +366,53 @@ type GeometryModel = {
 | JSON recipe | Exact recipe to reproduce the mandala. |
 
 Colored static output is planned for a later phase. The first version produces line art.
+
+### 4.8 Implemented Phase 1 geometry core
+
+The engine in `src/engines/mandala/` is framework-free:
+
+- `recipe.ts`: Zod schema, inferred recipe/types, and `createStarterRecipe`.
+- `geometry.ts`: move, line, cubic Bezier, and close-path commands; geometry model and point mapping.
+- `motifs.ts`: petal, arc, dot, polygon, star, and teardrop construction.
+- `symmetry.ts`: rotation and vertical reflection of endpoints **and** Bezier control points.
+- `boundaries.ts`: closed ring separator contours and organizing shapes.
+- `generate.ts`: deterministic ring placement and symmetry expansion.
+- `svg.ts`: black, unfilled SVG line art with stable coordinate precision, path IDs, layer IDs, and draw order.
+
+The current strict recipe accepts:
+
+- `schemaVersion: 1`, `engineVersion: "0.1.0"`, seed, and a square canvas of 128-4096 units.
+- Structure: all five base geometries, polygon sides (3-24), symmetry type/order (1-48), and exactly one center.
+- Global stroke width and irregularity.
+- Up to 12 layers using **ring distribution only**, with ID, enabled flag, motif, inner/outer radii, count, scale, rotation offset, width/curvature/point parameters, and seed offset.
+
+Unsupported versions or later-phase fields are rejected rather than ignored. Enabled layers must be ordered, non-overlapping rings with unique IDs; invalid recipes throw Zod errors. The UI displays validation errors instead of retaining stale artwork.
+
+Generation rules:
+
+- The starter recipe uses six rings and a 1000-unit canvas. Per-layer random streams derive from the seed, layer ID, and seed offset, so changing one layer does not reshuffle another.
+- Rotational symmetry repeats a sector N times. Dihedral symmetry uses N rotations plus their reflections; bilateral symmetry uses one vertical reflection; no symmetry generates independent placements. Bilateral and no-symmetry recipes have rotational order 1.
+- Requested motif counts round **up** to complete symmetry orbits (multiples of N, 2N, 2, or 1 respectively). Mirror templates sit inside their half-sector rather than on an axis, avoiding duplicate copies on the axis.
+- Mirror-symmetric layers currently require zero rotation offset to preserve the shared vertical mirror axis.
+- Polygon side/star point counts round up to a multiple of N in radial modes so separator boundaries share the motifs' symmetry.
+- Circle, polygon, star, and seeded freeform separator contours are sampled as closed polylines, using at least 192 samples and a sample count divisible by N. This is a lightweight geometry-core approximation, not an exact analytic curve representation.
+- Spiral organizing geometry keeps closed circular separators and adds Archimedean spiral guides within each ring, expanded by the same symmetry operations. True spiral distribution belongs to Phase 2.
+- Petals, dots, teardrops, polygons, and stars are closed paths; arcs and spiral guides are decorative open linework. A general gap/intersection cleanup pass remains a Phase 2 task.
+- Shared ring boundaries are emitted once. Geometry IDs and draw order are stable for a given recipe.
+
+The Mandala Studio renders the SVG as an image on a white canvas, with minimal seed/geometry/symmetry controls and the existing zoom/pan view. This bounded starter preview generates synchronously; worker-based generation, the full layer editor, save/export, and export metadata arrive in Phase 3. The Video Studio retains its static placeholder and independent state.
+
+Example:
+
+```ts
+import { createStarterRecipe } from './src/engines/mandala/recipe';
+import { generateMandala } from './src/engines/mandala/generate';
+import { renderSvg } from './src/engines/mandala/svg';
+
+const recipe = createStarterRecipe('lotus-001', 'circle', 'rotational', 12);
+const geometry = generateMandala(recipe);
+const svg = renderSvg(geometry);
+```
 
 ---
 
