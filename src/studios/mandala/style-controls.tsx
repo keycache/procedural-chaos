@@ -3,6 +3,7 @@ import {
   distributions,
   styles,
   symmetryTypes,
+  ornamentTreatments,
 } from '../../engines/mandala/recipe';
 import type { MandalaRecipe } from '../../engines/mandala/recipe';
 import { Button } from '../../components/ui/button';
@@ -77,6 +78,8 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
     resetOverrides,
     globals,
     setGlobals,
+    ornament,
+    setOrnament,
   } = useMandalaStore();
   const total = Object.values(blend).reduce((sum, value) => sum + value, 0);
   return (
@@ -139,15 +142,55 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
       <RangeControl
         label="Complexity"
         help={
-          mode === 'bold-floral'
-            ? 'Adds leaf-border hatching, crown beads, inset outlines, and small curls while preserving the large floral silhouette. Detail is bounded to keep the flower readable.'
-            : 'Adds more decorative bands, nested outlines, and outer-band repetitions as it increases. This replans the composition and replaces custom layers; Undo can restore them.'
+          mode === 'bold-floral' && ornament
+            ? 'Controls bounded inset, bead, vein, nested-petal, or scroll detail for the selected ornament treatment. The main floral silhouette stays unchanged. Details without enough clearance are omitted and reported below the preview.'
+            : mode === 'bold-floral'
+              ? 'Adds leaf-border hatching, crown beads, inset outlines, and small curls while preserving the large floral silhouette. Detail is bounded to keep the flower readable.'
+              : 'Adds more decorative bands, nested outlines, and outer-band repetitions as it increases. This replans the composition and replaces custom layers; Undo can restore them.'
         }
         value={options.complexity ?? 0.65}
         onChange={(complexity) => setOptions({ complexity })}
       />
       {mode === 'bold-floral' ? (
         <div className="space-y-5 border-t border-border pt-4">
+          <label className="block space-y-2 text-sm">
+            <ControlLabel
+              label="Ornament treatment"
+              help="Classic preserves the original floral drawing. Shape-aware treatments fit contour lace, botanical leaves, or paisley ornaments into crowns and leaves with measured border clearance. They do not change the overall composition family."
+            />
+            <select
+              aria-label="Ornament treatment"
+              className={selectClass}
+              value={ornament?.treatment ?? 'classic'}
+              onChange={(event) => {
+                const treatment = ornamentTreatments.find(
+                  (value) => value === event.target.value,
+                );
+                setOrnament(
+                  treatment
+                    ? {
+                        version: 1,
+                        treatment,
+                        spacing: ornament?.spacing ?? 0.35,
+                      }
+                    : undefined,
+                );
+              }}
+            >
+              <option value="classic">Classic floral</option>
+              <option value="contour">Contour lace</option>
+              <option value="botanical">Botanical filigree</option>
+              <option value="paisley">Paisley jewels</option>
+            </select>
+          </label>
+          {ornament && (
+            <RangeControl
+              label="Ornament spacing"
+              help="Increases border clearance and the gap between repeated ornaments. Minimum feature sizes and stroke-aware fitting prevent tiny or protruding details. At tight settings, the preview reports omitted details; if nothing readable fits, generation shows an error."
+              value={ornament.spacing}
+              onChange={(spacing) => setOrnament({ ...ornament, spacing })}
+            />
+          )}
           <label className="block space-y-2 text-sm">
             <ControlLabel
               label="Floral divisions"

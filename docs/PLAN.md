@@ -173,7 +173,7 @@ SVG exports include recipe/center/symmetry metadata and path draw order; PNG sup
 
 **Goal:** Prove a visibly stronger design language with one convincing bold-floral composition before adding more controls or detail.
 
-**Status:** Implemented locally. Phases 3.2–3.5 remain planned. All generation remains deterministic and entirely client-side. The references guide visual qualities, not exact reproductions.
+**Status:** Implemented locally. Phases 3.3–3.5 remain planned. All generation remains deterministic and entirely client-side. The references guide visual qualities, not exact reproductions.
 
 - Build an art-directed floral composition with a central rosette, dominant leaves, alternating secondary petals, curling tendrils, and a scalloped outer silhouette.
 - Introduce compound Bézier motifs and tapered, selectively solid-black accents. Use expressive proportions and intentional empty space rather than increasing path count everywhere.
@@ -203,6 +203,8 @@ SVG foreground-silhouette masks remove rear lines behind closed foreground forms
 
 **Goal:** Generalize the successful floral design into reusable motifs that contain well-composed interior decoration.
 
+**Status:** Implemented locally. Existing recipes and Classic floral retain their previous rendering; new treatments are opt-in.
+
 - Extract reusable parameterized lotus petals, leaves, paisleys, tendrils, scallops, and beaded borders from the validated design approach.
 - Define motif-local contours, interior usable areas, attachment points, and curved spines so decorations follow their parent shape.
 - Add contour-following inset borders, veins, curls, dots, and nested smaller petals. Use shape-appropriate patterns rather than stamping every decoration into every motif.
@@ -213,11 +215,17 @@ SVG foreground-silhouette masks remove rear lines behind closed foreground forms
 
 **Done when:** the motif vocabulary produces clean, recognizably different ornaments with detail that follows each shape, without accidental protrusions or unreadable micro-patterns.
 
+**Implemented locally:** reusable parameterized leaves, lotus petals, paisleys, scallops, curls, and arc-length-spaced bead borders. Closed motifs expose sampled contours, usable longitudinal ranges, paired-side coordinate mappings, attachment points, and curved spines. Three fixed-seed comparison presets add contour lace, botanical filigree, and paisley jewels to the existing floral family. Complexity controls bounded detail; Ornament spacing controls clearance and repeated-detail gaps.
+
+Candidate fitting measures stroke-aware border clearance and minimum feature size, with conservative curve-sampling bounds. Beads also enforce pairwise edge gaps around tips and the closed seam. Unsafe candidates are rejected whole and reported in preview/SVG metadata; empty readable output and exceeded work budgets are explicit errors. Primary silhouettes, foreground masking, stroke roles, and transparent output remain intact. Intentional vein/leaf attachments are not arbitrary collision-free packing. Undo/preset matching, old-document reopening, project persistence, and exports include optional versioned ornament settings. A compatibility fingerprint protects the exact original floral SVG.
+
 **UI checks:**
 
 1. Compare available ornament treatments on the floral composition. Expect details to remain inside the intended outlines with visible clearance.
 2. Vary ornament detail and spacing. Expect controlled changes, preserved large forms, and explicit limits rather than freezes or silently truncated drawings.
 3. Inspect low/high detail at normal preview size and in an exported image. Fine lines must remain subordinate to the primary silhouette.
+4. Compare Contour lace, Botanical filigree, and Paisley jewels presets at their shared seed/settings. Choose Classic floral to recover the original rendering; Undo should restore the selected treatment and exact drawing.
+5. Save/reopen a new-treatment project and export SVG, JSON, and transparent/white PNGs. Expect the same settings, artwork, and foreground masks after reopening or exporting.
 
 ---
 

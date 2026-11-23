@@ -23,6 +23,7 @@ export function MandalaStudio() {
     blend,
     options,
     globals,
+    ornament,
     layers,
     name,
     past,
@@ -43,13 +44,14 @@ export function MandalaStudio() {
           blend,
           options,
           globals,
+          ornament,
           layers,
         }),
       };
     } catch (error) {
       return { error: errorMessage(error) };
     }
-  }, [seed, mode, blend, options, globals, layers]);
+  }, [seed, mode, blend, options, globals, layers, ornament]);
   const generation = useGeneration(plan.recipe);
   const ready =
     generation && 'result' in generation ? generation.result : undefined;
@@ -212,6 +214,15 @@ export function MandalaStudio() {
                   </>
                 )}
                 {' / '}200 ms debounce
+                {ready?.ornamentFit && (
+                  <>
+                    {' '}
+                    / Ornament fit: {ready.ornamentFit.omitted} details omitted
+                    to preserve clearance (
+                    {ready.ornamentFit.clearance.toFixed(1)} design units
+                    minimum)
+                  </>
+                )}
               </p>
             )}
           </div>

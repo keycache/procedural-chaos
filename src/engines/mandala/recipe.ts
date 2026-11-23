@@ -90,10 +90,19 @@ export const layerSchema = z
     path: ['outerRadius'],
   });
 
+export const ornamentTreatments = ['contour', 'botanical', 'paisley'] as const;
+export const ornamentSettingsSchema = z.strictObject({
+  version: z.literal(1),
+  treatment: z.enum(ornamentTreatments),
+  spacing: fraction,
+});
+export type OrnamentSettings = z.infer<typeof ornamentSettingsSchema>;
+
 export const floralCompositionSchema = z.strictObject({
   family: z.literal('bold-floral'),
   version: z.literal(1),
   complexity: fraction,
+  ornament: ornamentSettingsSchema.optional(),
 });
 
 export const mandalaRecipeSchema = z

@@ -22,6 +22,7 @@ type MandalaState = EditorDocument & {
   setWeight: (style: Style, weight: number) => void;
   setOptions: (options: Partial<EditorDocument['options']>) => void;
   setGlobals: (globals: EditorDocument['globals']) => void;
+  setOrnament: (ornament: EditorDocument['ornament']) => void;
   resetOverrides: () => void;
   applyPreset: (id: string) => void;
   editLayer: (id: string, change: Partial<LayerRecipe>) => void;
@@ -36,8 +37,8 @@ type MandalaState = EditorDocument & {
 };
 
 export function editorSnapshot(state: EditorDocument): EditorDocument {
-  const { name, seed, mode, blend, options, globals, layers } = state;
-  return { name, seed, mode, blend, options, globals, layers };
+  const { name, seed, mode, blend, options, globals, layers, ornament } = state;
+  return { name, seed, mode, blend, options, globals, layers, ornament };
 }
 
 export const useMandalaStore = create<MandalaState>((set, get) => {
@@ -68,6 +69,7 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
         options: { complexity: get().options.complexity },
         globals: {},
         layers: null,
+        ornament: undefined,
       }),
     setWeight: (style, weight) =>
       commit({ blend: { ...get().blend, [style]: weight }, layers: null }),
@@ -75,12 +77,14 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
       commit({ options: { ...get().options, ...options }, layers: null }),
     setGlobals: (globals) =>
       commit({ globals: { ...get().globals, ...globals } }),
+    setOrnament: (ornament) => commit({ ornament }),
     resetOverrides: () => {
       const mode = get().mode;
       commit({
         options: { complexity: get().options.complexity },
         globals: {},
         layers: null,
+        ornament: undefined,
         blend: Object.values(get().blend).some((weight) => weight > 0)
           ? get().blend
           : mode === 'hybrid'
@@ -177,7 +181,13 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
     openProject: (input, projectId) => {
       const document = editorDocumentSchema.parse(input);
       editorRecipe(document);
-      set({ ...document, projectId, past: [], future: [] });
+      set({
+        ...document,
+        ornament: document.ornament,
+        projectId,
+        past: [],
+        future: [],
+      });
     },
     markSaved: (projectId) => set({ projectId }),
   };

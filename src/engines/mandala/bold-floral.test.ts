@@ -16,6 +16,19 @@ function coordinates(path: PathCommand[]) {
 }
 
 describe('bold floral compositions', () => {
+  it('preserves the original floral SVG when no ornament treatment is requested', async () => {
+    const recipe = createBoldFloralRecipe('flourish-008');
+    const digest = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(renderSvg(generateMandala(recipe), recipe)),
+    );
+    expect(
+      Array.from(new Uint8Array(digest), (byte) =>
+        byte.toString(16).padStart(2, '0'),
+      ).join(''),
+    ).toBe('28c08b349d3c8ab076a998080cffd57595e12f26bfcba15cb8ba9591b77060e3');
+  });
+
   it('reproduces seeded geometry without mutating recipes, with detail subordinate to the same silhouette', () => {
     const recipe = createBoldFloralRecipe('flourish-008');
     const before = structuredClone(recipe);

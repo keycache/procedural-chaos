@@ -22,6 +22,7 @@ export type GeometryModel = {
   centers?: Point[];
   symmetry: { order: number; type: SymmetryType; mirrorAngle?: number };
   paths: GeometryPath[];
+  ornamentFit?: { omitted: number; clearance: number; minimumFeature: number };
 };
 
 export function mapPath(

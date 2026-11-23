@@ -4,6 +4,7 @@ import {
   mandalaRecipeSchema,
   styleBlendSchema,
   styles,
+  ornamentSettingsSchema,
   type LayerRecipe,
   type MandalaRecipe,
 } from '../../engines/mandala/recipe';
@@ -28,6 +29,7 @@ export const editorDocumentSchema = z.strictObject({
     negativeSpace: z.number().min(0).max(1).optional(),
   }),
   layers: z.array(layerSchema).min(1).max(12).nullable(),
+  ornament: ornamentSettingsSchema.optional(),
 });
 
 export type EditorDocument = z.output<typeof editorDocumentSchema>;
@@ -42,6 +44,7 @@ export function createEditorDocument(): EditorDocument {
     options: { complexity: 0.65 },
     globals: {},
     layers: null,
+    ornament: undefined,
   };
 }
 
@@ -69,9 +72,14 @@ export function editorRecipe(document: EditorDocument): MandalaRecipe {
     );
     return mandalaRecipeSchema.parse({
       ...planned,
+      composition: { ...planned.composition, ornament: document.ornament },
       global: { ...planned.global, ...document.globals },
     });
   }
+  if (document.ornament)
+    throw new Error(
+      'Shape-aware ornaments require the bold-floral composition.',
+    );
   const planned = createStyleRecipe({
     seed: document.seed,
     blend: document.blend,
@@ -115,6 +123,33 @@ export const presets = [
     style: 'bold-floral',
     seed: 'flourish-008',
     complexity: 0.65,
+  },
+  {
+    id: 'floral-contour',
+    name: 'Contour lace',
+    description: 'Contour-following beads and nested lotus ornaments.',
+    style: 'bold-floral',
+    seed: 'flourish-008',
+    complexity: 0.65,
+    ornament: { version: 1, treatment: 'contour', spacing: 0.35 },
+  },
+  {
+    id: 'floral-botanical',
+    name: 'Botanical filigree',
+    description: 'Curved veins and nested leaf sprays inside floral forms.',
+    style: 'bold-floral',
+    seed: 'flourish-008',
+    complexity: 0.65,
+    ornament: { version: 1, treatment: 'botanical', spacing: 0.35 },
+  },
+  {
+    id: 'floral-paisley',
+    name: 'Paisley jewels',
+    description: 'Nested curved paisleys, tendrils, and bead accents.',
+    style: 'bold-floral',
+    seed: 'flourish-008',
+    complexity: 0.65,
+    ornament: { version: 1, treatment: 'paisley', spacing: 0.35 },
   },
   {
     id: 'lotus',
@@ -184,6 +219,7 @@ export function presetDocument(id: string): EditorDocument {
     options: { complexity: preset.complexity },
     globals: {},
     layers: null,
+    ornament: 'ornament' in preset ? { ...preset.ornament } : undefined,
   };
 }
 
@@ -201,6 +237,8 @@ export function matchingPresetId(document: EditorDocument): string {
         document.seed === expected.seed &&
         document.mode === expected.mode &&
         document.options.complexity === expected.options.complexity &&
+        document.ornament?.treatment === expected.ornament?.treatment &&
+        document.ornament?.spacing === expected.ornament?.spacing &&
         styles.every((style) => document.blend[style] === expected.blend[style])
       );
     })?.id ?? ''

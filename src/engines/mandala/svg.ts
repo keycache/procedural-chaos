@@ -55,6 +55,7 @@ export function renderSvg(
           center: model.center,
           centers: model.centers,
           symmetry: model.symmetry,
+          ...(model.ornamentFit ? { ornamentFit: model.ornamentFit } : {}),
           ...(recipe.composition
             ? {
                 drawingRoles: ['region-boundary', 'decoration', 'solid-accent'],

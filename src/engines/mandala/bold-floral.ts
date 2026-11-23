@@ -1,5 +1,4 @@
 import { createRandom } from '../../shared/random';
-import type { Point } from '../../shared/geometry';
 import {
   mapPath,
   type GeometryModel,
@@ -12,115 +11,19 @@ import {
   type MandalaRecipe,
 } from './recipe';
 import { singleStyle } from './styles';
-
-const move = (x: number, y: number): PathCommand => ({
-  type: 'M',
-  to: { x, y },
-});
-const line = (x: number, y: number): PathCommand => ({
-  type: 'L',
-  to: { x, y },
-});
-const curve = (
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  x: number,
-  y: number,
-): PathCommand => ({
-  type: 'C',
-  control1: { x: x1, y: y1 },
-  control2: { x: x2, y: y2 },
-  to: { x, y },
-});
-const close: PathCommand = { type: 'Z' };
-
-function circle(x: number, y: number, radius: number): PathCommand[] {
-  const k = radius * 0.5522847498307936;
-  return [
-    move(x, y - radius),
-    curve(x + k, y - radius, x + radius, y - k, x + radius, y),
-    curve(x + radius, y + k, x + k, y + radius, x, y + radius),
-    curve(x - k, y + radius, x - radius, y + k, x - radius, y),
-    curve(x - radius, y - k, x - k, y - radius, x, y - radius),
-    close,
-  ];
-}
-
-function leaf(
-  base: number,
-  tip: number,
-  width: number,
-  bend = 0,
-): PathCommand[] {
-  const height = tip - base;
-  return [
-    move(0, base),
-    curve(-width, base + height * 0.2, -width, tip - height * 0.28, bend, tip),
-    curve(width, tip - height * 0.28, width, base + height * 0.2, 0, base),
-    close,
-  ];
-}
-
-function inset(
-  path: PathCommand[],
-  factor: number,
-  anchor: number,
-): PathCommand[] {
-  return mapPath(path, ({ x, y }) => ({
-    x: x * factor,
-    y: anchor + (y - anchor) * factor,
-  }));
-}
-
-function cubic(a: Point, b: Point, c: Point, d: Point, t: number): Point {
-  const u = 1 - t;
-  return {
-    x:
-      u ** 3 * a.x + 3 * u ** 2 * t * b.x + 3 * u * t ** 2 * c.x + t ** 3 * d.x,
-    y:
-      u ** 3 * a.y + 3 * u ** 2 * t * b.y + 3 * u * t ** 2 * c.y + t ** 3 * d.y,
-  };
-}
-
-function curl(
-  x: number,
-  y: number,
-  radius: number,
-  turns: number,
-): PathCommand[] {
-  const segments = 20;
-  const sweep = turns * Math.PI * 2;
-  function sample(t: number) {
-    const r = radius * (1 - 0.95 * t);
-    const angle = t * sweep;
-    return {
-      point: { x: x + r * Math.cos(angle), y: y + r * Math.sin(angle) },
-      tangent: {
-        x: -radius * 0.95 * Math.cos(angle) - r * sweep * Math.sin(angle),
-        y: -radius * 0.95 * Math.sin(angle) + r * sweep * Math.cos(angle),
-      },
-    };
-  }
-  const commands: PathCommand[] = [move(x + radius, y)];
-  for (let index = 0; index < segments; index++) {
-    const a = sample(index / segments);
-    const b = sample((index + 1) / segments);
-    const step = 1 / (segments * 3);
-    commands.push(
-      curve(
-        a.point.x + a.tangent.x * step,
-        a.point.y + a.tangent.y * step,
-        b.point.x - b.tangent.x * step,
-        b.point.y - b.tangent.y * step,
-        b.point.x,
-        b.point.y,
-      ),
-    );
-  }
-  return commands;
-}
+import {
+  move,
+  line,
+  curve,
+  close,
+  circle,
+  leaf,
+  inset,
+  cubic,
+  curl,
+} from './ornament-shapes';
+import { createOrnamentShape, shapeFromContour } from './ornament-shapes';
+import { decorateOrnament } from './ornament-decoration';
 
 export function createBoldFloralRecipe(
   seed: string,
@@ -153,6 +56,23 @@ export function generateBoldFloral(recipe: MandalaRecipe): GeometryModel {
   const turns = 1.15 + random() * 0.2;
   const detail = recipe.composition.complexity;
   const width = (8 / order) * fullness;
+  const ornament = recipe.composition.ornament;
+  const leafShape = createOrnamentShape('leaf', {
+    base: 0.29,
+    tip: leafTip,
+    width: 0.175 * width,
+    bend: bend * width,
+  });
+  const decoratedLeaf = ornament
+    ? decorateOrnament(
+        leafShape,
+        ornament,
+        detail,
+        recipe.global.strokeWidth,
+        `${recipe.seed}:leaves`,
+      )
+    : undefined;
+  let decoratedCrown: ReturnType<typeof decorateOrnament> | undefined;
   const model: GeometryModel = {
     size,
     center,
@@ -184,6 +104,27 @@ export function generateBoldFloral(recipe: MandalaRecipe): GeometryModel {
         y: center.y + radius * (x * sin - y * cos),
       })),
     });
+  }
+
+  function addOrnament(
+    layer: string,
+    index: number,
+    angle: number,
+    result: ReturnType<typeof decorateOrnament>,
+  ) {
+    for (const path of result.paths)
+      add(
+        layer,
+        `${index}-ornament-${path.id}`,
+        path.d,
+        angle,
+        path.role,
+        path.weight,
+      );
+    model.ornamentFit = {
+      ...result.fit,
+      omitted: (model.ornamentFit?.omitted ?? 0) + result.fit.omitted,
+    };
   }
 
   // Whole crowns cross radial bands; only foreground silhouettes occlude earlier groups.
@@ -248,44 +189,55 @@ export function generateBoldFloral(recipe: MandalaRecipe): GeometryModel {
       1.4,
       true,
     );
-    add(
-      'pointed-crown',
-      `${index}-inset`,
-      inset(crown, 0.92, 0.58),
-      angle,
-      'region-boundary',
-      0.6,
-    );
-    for (const side of [-1, 1]) {
-      const scroll = mapPath(
-        curl(0.07 * width, 0.805, 0.045 * width, 1.1),
-        ({ x, y }) => ({ x: x * side, y }),
-      );
+    if (!ornament)
       add(
         'pointed-crown',
-        `${index}-head-curl-${side}`,
-        scroll,
+        `${index}-inset`,
+        inset(crown, 0.92, 0.58),
         angle,
-        'decoration',
-        0.9,
+        'region-boundary',
+        0.6,
       );
-      const beads = 3 + Math.round(detail * 5);
-      for (let bead = 0; bead < beads; bead++) {
-        const t = bead / (beads - 1);
+    if (ornament) {
+      decoratedCrown ??= decorateOrnament(
+        shapeFromContour('lotus-petal', crown, { from: 0.28, to: 0.7 }),
+        ornament,
+        detail,
+        recipe.global.strokeWidth,
+        `${recipe.seed}:crowns`,
+      );
+      addOrnament('pointed-crown', index, angle, decoratedCrown);
+    } else
+      for (const side of [-1, 1]) {
+        const scroll = mapPath(
+          curl(0.07 * width, 0.805, 0.045 * width, 1.1),
+          ({ x, y }) => ({ x: x * side, y }),
+        );
         add(
           'pointed-crown',
-          `${index}-bead-${side}-${bead}`,
-          circle(
-            side * width * (0.055 + Math.sin(t * Math.PI) * 0.07),
-            0.87 - t * 0.16,
-            0.0055,
-          ),
+          `${index}-head-curl-${side}`,
+          scroll,
           angle,
-          'solid-accent',
-          0,
+          'decoration',
+          0.9,
         );
+        const beads = 3 + Math.round(detail * 5);
+        for (let bead = 0; bead < beads; bead++) {
+          const t = bead / (beads - 1);
+          add(
+            'pointed-crown',
+            `${index}-bead-${side}-${bead}`,
+            circle(
+              side * width * (0.055 + Math.sin(t * Math.PI) * 0.07),
+              0.87 - t * 0.16,
+              0.0055,
+            ),
+            angle,
+            'solid-accent',
+            0,
+          );
+        }
       }
-    }
     add(
       'pointed-crown',
       `${index}-tip`,
@@ -358,6 +310,10 @@ export function generateBoldFloral(recipe: MandalaRecipe): GeometryModel {
       1.35,
       true,
     );
+    if (decoratedLeaf) {
+      addOrnament('leaves', index, angle, decoratedLeaf);
+      continue;
+    }
     add(
       'leaves',
       `${index}-border`,

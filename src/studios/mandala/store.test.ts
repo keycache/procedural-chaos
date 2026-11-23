@@ -1,11 +1,48 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { singleStyle } from '../../engines/mandala/styles';
 import { editorSnapshot, useMandalaStore } from './store';
-import { editorRecipe, matchingPresetId, presets } from './editor';
+import {
+  createEditorDocument,
+  editorRecipe,
+  matchingPresetId,
+  presets,
+} from './editor';
 import { renderSvg } from '../../engines/mandala/svg';
 import { generateMandala } from '../../engines/mandala/generate';
 
 describe('style editor state', () => {
+  it('keeps ornament selection, spacing, undo, and old project reopening consistent', () => {
+    const state = useMandalaStore.getState();
+    state.applyPreset('floral-botanical');
+    const botanical = editorSnapshot(useMandalaStore.getState());
+    expect(editorRecipe(botanical).composition?.ornament).toEqual({
+      version: 1,
+      treatment: 'botanical',
+      spacing: 0.35,
+    });
+    state.setOrnament({ version: 1, treatment: 'botanical', spacing: 0.7 });
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('');
+    state.undo();
+    expect(matchingPresetId(useMandalaStore.getState())).toBe(
+      'floral-botanical',
+    );
+    state.applyPreset('floral');
+    expect(useMandalaStore.getState().ornament).toBeUndefined();
+    state.undo();
+    expect(editorSnapshot(useMandalaStore.getState())).toEqual(botanical);
+    state.setMode('geometric');
+    expect(useMandalaStore.getState().ornament).toBeUndefined();
+    state.undo();
+    expect(editorSnapshot(useMandalaStore.getState())).toEqual(botanical);
+    const legacy = createEditorDocument();
+    delete legacy.ornament;
+    state.openProject(legacy, 'legacy-project');
+    expect(useMandalaStore.getState().ornament).toBeUndefined();
+    expect(
+      editorRecipe(useMandalaStore.getState()).composition,
+    ).toBeUndefined();
+  });
+
   beforeEach(() => {
     useMandalaStore.setState(useMandalaStore.getInitialState(), true);
   });
