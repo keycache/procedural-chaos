@@ -1,7 +1,21 @@
 import { z } from 'zod';
 import { seedSchema } from '../../shared/schemas';
 
-export const ENGINE_VERSION = '0.1.0';
+export const ENGINE_VERSION = '0.2.0';
+export const styles = [
+  'traditional',
+  'geometric',
+  'organic',
+  'abstract',
+] as const;
+export const distributions = [
+  'ring',
+  'grid',
+  'spiral',
+  'branching',
+  'tessellation',
+  'scatter',
+] as const;
 export const baseGeometries = [
   'circle',
   'polygon',
@@ -22,6 +36,10 @@ export const motifs = [
   'polygon',
   'star',
   'teardrop',
+  'leaf',
+  'spiral',
+  'branch',
+  'interlocking',
 ] as const;
 
 const fraction = z.number().finite().min(0).max(1);
@@ -31,17 +49,35 @@ const angle = z
   .min(-Math.PI * 2)
   .max(Math.PI * 2);
 
+export const styleBlendSchema = z
+  .strictObject({
+    traditional: fraction,
+    geometric: fraction,
+    organic: fraction,
+    abstract: fraction,
+  })
+  .refine((blend) => Object.values(blend).some((weight) => weight > 0), {
+    message: 'Give at least one style a positive weight.',
+  });
+
 const layerSchema = z
   .strictObject({
     id: z.string().regex(/^[a-z][a-z0-9-]*$/),
     enabled: z.boolean(),
-    distribution: z.literal('ring'),
+    distribution: z.enum(distributions),
     motif: z.enum(motifs),
     innerRadius: z.number().finite().min(0.02).max(0.9),
     outerRadius: z.number().finite().min(0.02).max(0.9),
     count: z.number().int().min(1).max(192),
     scale: z.number().finite().min(0.1).max(1),
     rotationOffset: angle,
+    recursionDepth: z.number().int().min(0).max(3).default(0),
+    scaling: z.number().finite().min(0.35).max(0.8).default(0.62),
+    twist: angle.default(0),
+    distortion: fraction.default(0),
+    noise: fraction.default(0),
+    ornament: fraction.default(0),
+    strokeScale: z.number().finite().min(0.4).max(2).default(1),
     motifParams: z.strictObject({
       width: z.number().finite().min(0.1).max(1),
       curvature: z.number().finite().min(0.1).max(1),
@@ -59,13 +95,15 @@ export const mandalaRecipeSchema = z
     schemaVersion: z.literal(1),
     engineVersion: z.literal(ENGINE_VERSION),
     seed: seedSchema,
+    style: styleBlendSchema.optional(),
     canvas: z.strictObject({ size: z.number().int().min(128).max(4096) }),
     structure: z.strictObject({
       baseGeometry: z.enum(baseGeometries),
       polygonSides: z.number().int().min(3).max(24),
       symmetryOrder: z.number().int().min(1).max(48),
       symmetryType: z.enum(symmetryTypes),
-      centers: z.literal(1),
+      centers: z.number().int().min(1).max(4),
+      brokenSymmetry: fraction.default(0),
     }),
     global: z.strictObject({
       irregularity: fraction,
@@ -132,6 +170,9 @@ export type LayerRecipe = MandalaRecipe['layers'][number];
 export type BaseGeometry = MandalaRecipe['structure']['baseGeometry'];
 export type SymmetryType = MandalaRecipe['structure']['symmetryType'];
 export type MotifId = LayerRecipe['motif'];
+export type Style = (typeof styles)[number];
+export type StyleBlend = z.infer<typeof styleBlendSchema>;
+export type Distribution = (typeof distributions)[number];
 
 export function createStarterRecipe(
   seed: string,
@@ -161,6 +202,7 @@ export function createStarterRecipe(
       symmetryOrder: order,
       symmetryType,
       centers: 1,
+      brokenSymmetry: 0,
     },
     global: { irregularity: 0.3, strokeWidth: 1.5 },
     layers: ringMotifs.map((motif, index) => ({
@@ -174,6 +216,13 @@ export function createStarterRecipe(
       scale:
         motif === 'dot' || motif === 'polygon' || motif === 'star' ? 0.72 : 1,
       rotationOffset: 0,
+      recursionDepth: 0,
+      scaling: 0.62,
+      twist: 0,
+      distortion: 0,
+      noise: 0,
+      ornament: 0,
+      strokeScale: 1,
       motifParams: { width: 0.85, curvature: 0.8, points: 5 },
       seedOffset: index,
     })),

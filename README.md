@@ -2,14 +2,25 @@
 
 A client-side creative playground built with Vite, React, TypeScript, shadcn/ui, and Tailwind CSS.
 
-- **Mandala Studio:** basic, deterministic mandala line-art generation.
+- **Mandala Studio:** deterministic traditional, geometric, organic, abstract, and hybrid mandala line art.
 - **Video Studio:** planned automated coloring videos using generated or imported artwork.
 
-Phase 1 adds a geometry engine and generated SVG preview to the Phase 0 foundation. The Mandala Studio lets you change the seed, base geometry, symmetry mode, and rotational divisions across six starter rings. Video creation, style blending, the full layer editor, project saving, and artwork exports are still planned.
+Phase 2 adds style-guided compositions and normalized hybrid blending, with nested ornamentation, beaded borders, six distributions, recursive motifs, transformations, and multiple focal centers. Geometry, symmetry, distribution, and growth controls override the style suggestions. Video creation, the full layer editor, project saving, and artwork exports are still planned.
 
 Open `#/mandala` to try the generator. Identical seeds and settings produce identical line art. The Video Studio remains a placeholder; the landing page still offers the local-storage and Web Worker smoke tests.
 
 No backend, accounts, or server-side processing are required. Desktop Chrome or Edge is recommended.
+
+## Try the current Mandala Studio
+
+1. Select **traditional**, **geometric**, **organic**, and **abstract**. Expect visibly different petals, polygon patterns, botanical forms, and asymmetric multi-center compositions.
+2. Select **hybrid** (starts at 70% traditional / 30% geometric). Adjust the four weights; the contribution summary normalizes them. All-zero weights show an explicit error; add a positive weight or restore defaults to recover.
+3. Move **Complexity** to compare simpler bands with more layered ornamentation. Keep the same seed/settings to reproduce the artwork; change the seed to vary band proportions and details.
+4. Under **Geometry & placement**, try a different base, symmetry, distribution, or number of focal centers. Explicit choices override style defaults. Narrow ornamental borders remain rings.
+5. Expand **Growth & transformations** and try recursion, twist, distortion, noise, and broken symmetry. Broken symmetry and multiple centers are labeled as not globally symmetric. **Restore style defaults** clears overrides; selecting a new style also clears them.
+6. Zoom, drag to pan, and reset the view. On desktop, the preview stays beside the settings as you scroll; smaller screens keep the stacked layout. Video Studio remains an independent placeholder.
+
+Styled paths are closed and can enclose coloring regions, but dense intersections and tiny details are not automatically simplified. Generation is currently synchronous and capped at 24,000 paths with an explicit error; worker/debounced generation arrives with the full editor.
 
 ## Prerequisites
 

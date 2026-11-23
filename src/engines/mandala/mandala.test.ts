@@ -149,7 +149,7 @@ describe('motif construction', () => {
 });
 
 describe('recipe validation', () => {
-  it('rejects unsupported versions and later-phase features rather than silently ignoring them', () => {
+  it('rejects unsupported versions, incomplete blends and unknown distributions rather than ignoring them', () => {
     const recipe = createStarterRecipe('validation');
     expect(
       mandalaRecipeSchema.safeParse({ ...recipe, engineVersion: '2.0.0' })
@@ -162,7 +162,7 @@ describe('recipe validation', () => {
     expect(
       mandalaRecipeSchema.safeParse({
         ...recipe,
-        layers: [{ ...recipe.layers[0], distribution: 'branching' }],
+        layers: [{ ...recipe.layers[0], distribution: 'voronoi' }],
       }).success,
     ).toBe(false);
   });

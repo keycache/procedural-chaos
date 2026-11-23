@@ -3,34 +3,25 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { Preview } from '../../app/preview';
 import { StudioPlaceholder } from '../../app/studio-placeholder';
+import { Button } from '../../components/ui/button';
 import { generateMandala } from '../../engines/mandala/generate';
-import {
-  baseGeometries,
-  createStarterRecipe,
-  symmetryTypes,
-} from '../../engines/mandala/recipe';
+import { createStyleRecipe } from '../../engines/mandala/styles';
 import { renderSvg } from '../../engines/mandala/svg';
+import { StyleControls } from './style-controls';
 import { useMandalaStore } from './store';
 
 export function MandalaStudio() {
-  const {
-    seed,
-    setSeed,
-    baseGeometry,
-    setBaseGeometry,
-    symmetryType,
-    setSymmetryType,
-    symmetryOrder,
-    setSymmetryOrder,
-  } = useMandalaStore();
-  const result = useMemo<
-    { ok: true; svg: string; count: number } | { ok: false; error: string }
-  >(() => {
+  const { seed, setSeed, mode, blend, options } = useMandalaStore();
+  const result = useMemo(() => {
     try {
-      const model = generateMandala(
-        createStarterRecipe(seed, baseGeometry, symmetryType, symmetryOrder),
-      );
-      return { ok: true, svg: renderSvg(model), count: model.paths.length };
+      const recipe = createStyleRecipe({ seed, blend, ...options });
+      const model = generateMandala(recipe);
+      return {
+        ok: true as const,
+        recipe,
+        svg: renderSvg(model),
+        count: model.paths.length,
+      };
     } catch (error) {
       const message =
         error instanceof z.ZodError
@@ -38,9 +29,9 @@ export function MandalaStudio() {
           : error instanceof Error
             ? error.message
             : 'Could not generate the mandala.';
-      return { ok: false, error: message };
+      return { ok: false as const, error: message };
     }
-  }, [seed, baseGeometry, symmetryType, symmetryOrder]);
+  }, [seed, blend, options]);
 
   useEffect(() => {
     if (!result.ok) {
@@ -49,102 +40,59 @@ export function MandalaStudio() {
     }
   }, [result]);
 
-  const mirroredOnly = symmetryType === 'bilateral' || symmetryType === 'none';
-  const selectClass =
-    'h-9 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50';
   return (
     <StudioPlaceholder
       kind="mandala"
       seed={seed}
       setSeed={setSeed}
       settings={
-        <div className="space-y-5 p-5">
-          <p className="eyebrow">GEOMETRY & SYMMETRY</p>
-          <label htmlFor="base-geometry" className="block space-y-2 text-sm">
-            <span>Base geometry</span>
-            <select
-              id="base-geometry"
-              value={baseGeometry}
-              className={selectClass}
-              onChange={(event) => {
-                const value = baseGeometries.find(
-                  (geometry) => geometry === event.target.value,
-                );
-                if (value) setBaseGeometry(value);
-              }}
-            >
-              {baseGeometries.map((geometry) => (
-                <option key={geometry} value={geometry}>
-                  {geometry}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label htmlFor="symmetry-type" className="block space-y-2 text-sm">
-            <span>Symmetry</span>
-            <select
-              id="symmetry-type"
-              value={symmetryType}
-              className={selectClass}
-              onChange={(event) => {
-                const value = symmetryTypes.find(
-                  (type) => type === event.target.value,
-                );
-                if (value) setSymmetryType(value);
-              }}
-            >
-              {symmetryTypes.map((symmetry) => (
-                <option key={symmetry} value={symmetry}>
-                  {symmetry}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label htmlFor="symmetry-order" className="block space-y-2 text-sm">
-            <span>Rotational divisions</span>
-            <select
-              id="symmetry-order"
-              value={mirroredOnly ? 1 : symmetryOrder}
-              disabled={mirroredOnly}
-              className={selectClass}
-              onChange={(event) => setSymmetryOrder(Number(event.target.value))}
-            >
-              {[1, 4, 6, 8, 12, 16, 24, 48].map((order) => (
-                <option key={order} value={order}>
-                  {order}
-                </option>
-              ))}
-            </select>
-          </label>
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            Six starter rings: petals, dots, teardrops, polygons, stars, and
-            arcs. Symmetric copies share their seeded variations.
-          </p>
-          {baseGeometry === 'spiral' && (
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              Spiral guides connect closed circular ring boundaries. More growth
-              and distribution systems arrive in Phase 2.
-            </p>
-          )}
-        </div>
+        <StyleControls recipe={result.ok ? result.recipe : undefined} />
       }
       preview={
         !result.ok ? (
           <div
             role="alert"
-            className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-sm text-destructive"
+            className="space-y-4 rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-sm text-destructive"
           >
-            {result.error}
+            <p>{result.error}</p>
+            <Button
+              variant="outline"
+              onClick={() => useMandalaStore.getState().resetOverrides()}
+            >
+              Restore style defaults
+            </Button>
           </div>
         ) : (
-          <Preview label={`GENERATED LINE ART / ${result.count} PATHS`}>
-            <img
-              src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(result.svg)}`}
-              alt={`Generated ${baseGeometry} mandala with ${symmetryType} symmetry`}
-              draggable={false}
-              className="w-full rounded-sm bg-white shadow-xl"
-            />
-          </Preview>
+          <div className="space-y-3">
+            <Preview
+              label={`${mode.toUpperCase()} / ${result.count} CLOSED PATHS`}
+            >
+              <img
+                src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(result.svg)}`}
+                alt={`Generated ${mode} ${result.recipe.structure.baseGeometry} mandala`}
+                draggable={false}
+                className="w-full rounded-sm bg-white shadow-xl"
+              />
+            </Preview>
+            <p
+              className="text-xs leading-relaxed text-muted-foreground"
+              aria-live="polite"
+            >
+              {result.recipe.layers.length} bands /{' '}
+              {result.recipe.structure.centers}{' '}
+              {result.recipe.structure.centers === 1 ? 'center' : 'centers'} /{' '}
+              {result.recipe.structure.centers > 1 ||
+              result.recipe.structure.brokenSymmetry > 0
+                ? 'Intentionally broken global symmetry'
+                : `${result.recipe.structure.symmetryType} symmetry`}
+              {' / '}
+              {[
+                ...new Set(
+                  result.recipe.layers.map((layer) => layer.distribution),
+                ),
+              ].join(', ')}
+            </p>
+          </div>
         )
       }
     />

@@ -47,7 +47,7 @@ export function StudioPlaceholder({
             <Icon className="size-4 text-primary" />
             <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
             <Badge variant="outline">
-              {preview ? 'Geometry core / Phase 1' : 'Foundation preview'}
+              {preview ? 'Styles & hybrid blending' : 'Foundation preview'}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -113,7 +113,7 @@ export function StudioPlaceholder({
               </details>
             ))}
         </aside>
-        <div className="space-y-4">
+        <div className="space-y-4 lg:sticky lg:top-24">
           {preview ?? <Preview />}
           {isVideo ? (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card/50 p-4">
@@ -145,7 +145,7 @@ export function StudioPlaceholder({
           ) : (
             <p className="text-xs text-muted-foreground">
               {preview
-                ? 'Drag to pan and use the buttons to zoom. Saving, exports, style blending, and the full layer editor arrive in later phases.'
+                ? 'Drag to pan and use the buttons to zoom. Saving, exports, and the full layer editor arrive in later phases.'
                 : 'Drag to pan, use the buttons to zoom. This illustration is a static UI study, not generated output.'}
             </p>
           )}

@@ -73,7 +73,7 @@ export function Home() {
             number: '01',
             title: 'Make the pattern',
             text: 'A parametric playground for traditional, geometric, organic, and abstract mandalas.',
-            detail: 'Seeded line art is ready to explore',
+            detail: 'Four styles and hybrid blends are ready to explore',
           },
           {
             to: '/video',

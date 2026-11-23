@@ -9,6 +9,81 @@ export function createMotif(
   points: number,
 ): PathCommand[] {
   switch (motif) {
+    case 'leaf':
+      return [
+        { type: 'M', to: { x: 0, y: 0 } },
+        {
+          type: 'C',
+          control1: { x: -0.65 * curvature, y: 0.25 },
+          control2: { x: -0.5, y: 0.7 },
+          to: { x: 0, y: 1 },
+        },
+        {
+          type: 'C',
+          control1: { x: 0.5, y: 0.7 },
+          control2: { x: 0.65 * curvature, y: 0.25 },
+          to: { x: 0, y: 0 },
+        },
+        { type: 'Z' },
+      ];
+    case 'spiral': {
+      const turns = 1.65;
+      const outline = Array.from({ length: 65 }, (_, index) => {
+        const t = index / 64;
+        const angle = t * Math.PI * 2 * turns;
+        const radius = 0.04 + t * 0.43;
+        return {
+          x: Math.cos(angle) * radius,
+          y: 0.5 + Math.sin(angle) * radius,
+        };
+      });
+      const inner = Array.from({ length: 65 }, (_, index) => {
+        const t = (64 - index) / 64;
+        const angle = t * Math.PI * 2 * turns;
+        const radius = Math.max(0.012, 0.04 + t * 0.43 - 0.025);
+        return {
+          x: Math.cos(angle) * radius,
+          y: 0.5 + Math.sin(angle) * radius,
+        };
+      });
+      return closedPolyline([...outline, ...inner]);
+    }
+    case 'branch': {
+      const trunk = closedPolyline([
+        { x: -0.018, y: 0 },
+        { x: 0.018, y: 0 },
+        { x: 0.008, y: 1 },
+        { x: -0.008, y: 1 },
+      ]);
+      const leaves = [0.2, 0.4, 0.6, 0.8].flatMap((height, index) =>
+        [-1, 1].flatMap((side): PathCommand[] => [
+          { type: 'M', to: { x: 0, y: height - 0.08 } },
+          {
+            type: 'C',
+            control1: { x: side * 0.2, y: height - 0.09 },
+            control2: { x: side * (0.4 - index * 0.04), y: height },
+            to: { x: side * (0.38 - index * 0.05), y: height + 0.12 },
+          },
+          {
+            type: 'C',
+            control1: { x: side * 0.12, y: height + 0.15 },
+            control2: { x: side * 0.03, y: height + 0.02 },
+            to: { x: 0, y: height - 0.08 },
+          },
+          { type: 'Z' },
+        ]),
+      );
+      return [...trunk, ...leaves];
+    }
+    case 'interlocking':
+      return [0.3, 0.7].flatMap((centerY) =>
+        closedPolyline([
+          { x: 0, y: centerY - 0.3 },
+          { x: 0.45, y: centerY },
+          { x: 0, y: centerY + 0.3 },
+          { x: -0.45, y: centerY },
+        ]),
+      );
     case 'petal':
     case 'teardrop': {
       const waist = motif === 'petal' ? 0.25 : 0.05;

@@ -17,6 +17,7 @@ export type GeometryPath = {
 export type GeometryModel = {
   size: number;
   center: Point;
+  centers?: Point[];
   symmetry: { order: number; type: SymmetryType; mirrorAngle?: number };
   paths: GeometryPath[];
 };

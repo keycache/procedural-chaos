@@ -271,7 +271,7 @@ Generate intricate, coloring-ready mandala line art from parameters and a seed. 
 
 ### 4.2 Recipe model
 
-A mandala is fully described by a versioned recipe. The following is the target model for the complete generator; the implemented Phase 1 subset is described in [4.8](#48-implemented-phase-1-geometry-core).
+A mandala is fully described by a versioned recipe. The following is the target model for the complete generator; the implemented subset is described in [4.8](#48-implemented-geometry-core) and [4.9](#49-implemented-styles-and-hybrid-compositions).
 
 ```ts
 type MandalaRecipe = {
@@ -285,7 +285,8 @@ type MandalaRecipe = {
     polygonSides?: number;
     symmetryOrder: number;                // 1–48
     symmetryType: 'rotational' | 'dihedral' | 'bilateral' | 'none';
-    centers: number;                      // >1 only for abstract styles
+    centers: number;                      // 1–4; abstract favors multiple centers
+    brokenSymmetry: number;               // 0–1; explicit opt-in elsewhere
   };
   global: {
     complexity: number;                   // 0–1
@@ -309,6 +310,11 @@ type LayerRecipe = {
   rotationOffset: number;
   twist: number;
   recursionDepth: number;
+  scaling: number;                        // recursive size multiplier
+  distortion: number;
+  noise: number;
+  ornament: number;
+  strokeScale: number;
   motifParams: Record<string, number>;    // width, curvature, point count, detail...
   seedOffset: number;
 };
@@ -317,16 +323,18 @@ type LayerRecipe = {
 ### 4.3 Generation pipeline
 
 ```text
-Recipe → style resolver → layer planner → motif generators → symmetry expansion
-       → transformations → boundary/closure pass → geometry model → SVG/Canvas renderers
+Style options → style resolver → layer planner → validated recipe
+             → motif generators + distributions → canonical transformations
+             → symmetry expansion → optional symmetry breaking
+             → boundary/closure pass → geometry model → SVG/Canvas renderers
 ```
 
 1. **Style resolver:** converts the style blend into default biases (for example, traditional favors rings and petals; geometric favors polygons and exact spacing; organic favors branching and irregularity; abstract allows multiple centers and broken symmetry). Explicit user settings always override biases.
 2. **Layer planner:** creates or adjusts layers when a preset or randomization requests them.
 3. **Motif generators:** pure functions `(params, rng) → Path[]` that build one sector or element.
-4. **Symmetry expansion:** applies rotations, `θk = 2πk / N`, and mirrors for dihedral symmetry.
-5. **Transformations:** recursion, scaling, twist, controlled noise, and distortion.
-6. **Closure pass:** ensures the line art produces closed, fillable regions. Each layer has separator rings or boundary polygons between neighboring layers, and motifs are anchored to those boundaries so strokes meet instead of leaving gaps.
+4. **Transformations:** nested scaling, twist, controlled noise, and distortion act on the canonical template before expansion, so exact symmetry is preserved unless explicitly broken.
+5. **Symmetry expansion:** applies rotations, `θk = 2πk / N`, and mirrors for dihedral symmetry. An explicit broken-symmetry setting then perturbs orbit angles reproducibly.
+6. **Closure pass:** closes each styled subpath, snaps near-coincident endpoints, and rejects nonfinite coordinates. Closed separators distinguish adjacent bands. Motifs are independently closed rather than requiring contact with every separator; this does not perform general Boolean intersection cleanup or guarantee a minimum-sized region.
 
 All randomness comes from a seeded PRNG derived from `seed + layer.seedOffset`, so changing one layer does not reshuffle others.
 
@@ -336,6 +344,7 @@ All randomness comes from a seeded PRNG derived from `seed + layer.seedOffset`, 
 type GeometryModel = {
   size: number;
   center: { x: number; y: number };
+  centers?: Array<{ x: number; y: number }>;
   symmetry: { order: number; type: SymmetryType; mirrorAngle?: number };
   paths: Array<{ id: string; layerId: string; d: PathCommand[]; strokeWidth: number; drawOrder: number }>;
 };
@@ -347,7 +356,7 @@ type GeometryModel = {
 
 - **SVG renderer:** generates an SVG string directly from the geometry model without one React component per shape. Used for the preview and exports.
 - **Canvas renderer:** optional fast preview for very dense mandalas or while a slider is being dragged.
-- Generation runs in a worker. Slider changes are debounced, and stale results are discarded.
+- Generation will run in a worker with debounced slider changes and stale-result rejection in Phase 3. The current bounded preview is synchronous.
 
 ### 4.6 Controls
 
@@ -367,40 +376,42 @@ type GeometryModel = {
 
 Colored static output is planned for a later phase. The first version produces line art.
 
-### 4.8 Implemented Phase 1 geometry core
+### 4.8 Implemented geometry core
 
 The engine in `src/engines/mandala/` is framework-free:
 
 - `recipe.ts`: Zod schema, inferred recipe/types, and `createStarterRecipe`.
 - `geometry.ts`: move, line, cubic Bezier, and close-path commands; geometry model and point mapping.
-- `motifs.ts`: petal, arc, dot, polygon, star, and teardrop construction.
+- `motifs.ts`: petal, arc, dot, polygon, star, teardrop, leaf, closed spiral ribbon, branch foliage, and interlocking polygons.
 - `symmetry.ts`: rotation and vertical reflection of endpoints **and** Bezier control points.
 - `boundaries.ts`: closed ring separator contours and organizing shapes.
-- `generate.ts`: deterministic ring placement and symmetry expansion.
+- `generate.ts`: deterministic placement, ornamentation, transformations, symmetry expansion, and multiple-center composition.
 - `svg.ts`: black, unfilled SVG line art with stable coordinate precision, path IDs, layer IDs, and draw order.
 
 The current strict recipe accepts:
 
-- `schemaVersion: 1`, `engineVersion: "0.1.0"`, seed, and a square canvas of 128-4096 units.
-- Structure: all five base geometries, polygon sides (3-24), symmetry type/order (1-48), and exactly one center.
+- `schemaVersion: 1`, `engineVersion: "0.2.0"`, seed, and a square canvas of 128-4096 units. Older engine-version recipes are rejected explicitly; project import/migrations do not exist yet.
+- Optional style blend with four finite 0-1 weights and at least one positive value.
+- Structure: all five base geometries, polygon sides (3-24), symmetry type/order (1-48), one to four centers, and 0-1 broken symmetry.
 - Global stroke width and irregularity.
-- Up to 12 layers using **ring distribution only**, with ID, enabled flag, motif, inner/outer radii, count, scale, rotation offset, width/curvature/point parameters, and seed offset.
+- Up to 12 layers using ring, grid, spiral, branching, tessellation, or scatter, with ID, enabled flag, motif, inner/outer radii, count, scale, rotation offset, width/curvature/point parameters, and seed offset.
+- Layer recursion depth (0-3), recursive scaling (0.35-0.8), twist (radians), distortion/noise/ornament (0-1), and stroke multiplier (0.4-2). Neutral defaults preserve the simple starter recipe.
 
-Unsupported versions or later-phase fields are rejected rather than ignored. Enabled layers must be ordered, non-overlapping rings with unique IDs; invalid recipes throw Zod errors. The UI displays validation errors instead of retaining stale artwork.
+Unsupported versions or unknown fields are rejected rather than ignored. Enabled layers must have ordered, non-overlapping radial bounds and unique IDs; invalid recipes throw Zod errors. The UI displays validation errors instead of retaining stale artwork.
 
 Generation rules:
 
 - The starter recipe uses six rings and a 1000-unit canvas. Per-layer random streams derive from the seed, layer ID, and seed offset, so changing one layer does not reshuffle another.
 - Rotational symmetry repeats a sector N times. Dihedral symmetry uses N rotations plus their reflections; bilateral symmetry uses one vertical reflection; no symmetry generates independent placements. Bilateral and no-symmetry recipes have rotational order 1.
-- Requested motif counts round **up** to complete symmetry orbits (multiples of N, 2N, 2, or 1 respectively). Mirror templates sit inside their half-sector rather than on an axis, avoiding duplicate copies on the axis.
+- Ring/spiral/scatter counts round **up** to complete symmetry orbits (multiples of N, 2N, 2, or 1 respectively). Grid/tessellation use count as a density hint and fit cell rows to sector width, clipping placements to the annular band; branching uses a bounded binary tree per sector. Mirror templates sit inside their half-sector rather than on an axis, avoiding duplicate copies on the axis.
 - Mirror-symmetric layers currently require zero rotation offset to preserve the shared vertical mirror axis.
 - Polygon side/star point counts round up to a multiple of N in radial modes so separator boundaries share the motifs' symmetry.
 - Circle, polygon, star, and seeded freeform separator contours are sampled as closed polylines, using at least 192 samples and a sample count divisible by N. This is a lightweight geometry-core approximation, not an exact analytic curve representation.
-- Spiral organizing geometry keeps closed circular separators and adds Archimedean spiral guides within each ring, expanded by the same symmetry operations. True spiral distribution belongs to Phase 2.
-- Petals, dots, teardrops, polygons, and stars are closed paths; arcs and spiral guides are decorative open linework. A general gap/intersection cleanup pass remains a Phase 2 task.
+- Spiral organizing geometry keeps closed circular separators and adds Archimedean spiral guides within each ring, expanded by the same symmetry operations. The independent spiral distribution advances placements radially and angularly within each sector.
+- The legacy `createStarterRecipe` keeps decorative arcs and spiral guides open. Style-planned recipes close every subpath, including those decorations, with chords where necessary.
 - Shared ring boundaries are emitted once. Geometry IDs and draw order are stable for a given recipe.
 
-The Mandala Studio renders the SVG as an image on a white canvas, with minimal seed/geometry/symmetry controls and the existing zoom/pan view. This bounded starter preview generates synchronously; worker-based generation, the full layer editor, save/export, and export metadata arrive in Phase 3. The Video Studio retains its static placeholder and independent state.
+The Mandala Studio renders the SVG as an image on a white canvas, with style/blend, complexity, geometry, placement, and growth controls plus zoom/pan. This bounded preview generates synchronously; worker-based generation, the full layer editor, save/export, and export metadata arrive in Phase 3. The Video Studio retains its static placeholder and independent state.
 
 Example:
 
@@ -413,6 +424,35 @@ const recipe = createStarterRecipe('lotus-001', 'circle', 'rotational', 12);
 const geometry = generateMandala(recipe);
 const svg = renderSvg(geometry);
 ```
+
+### 4.9 Implemented styles and hybrid compositions
+
+Additional framework-free modules:
+
+- `styles.ts`: validated style options, blend normalization, weighted numeric biases, seeded motif/distribution selection, and a band planner.
+- `distribution.ts`: ring placement, Cartesian grid, staggered hexagonal cells, spiral progression, bounded binary branching, and seeded polar scatter within radial bands.
+- `transforms.ts`: recursive inset scaling/twist, smooth positional distortion/noise, and subpath closure.
+
+Style defaults:
+
+| Style | Composition |
+| --- | --- |
+| Traditional | Eight-fold rotation, circular bands, petals/teardrops/leaves, nested outlines, veins, and bead borders. |
+| Geometric | Six-fold rotation, stars/polygons/interlocking forms, ring/grid/tessellation placement, and precise spacing. |
+| Organic | Six-fold rotation with freeform boundaries, leaves/branches/spiral ribbons, branching/spiral/ring placement, and smooth controlled irregularity. |
+| Abstract | No enforced symmetry, freeform boundaries, three centers, mixed spiral/grid/scatter/ring placement, and deliberate perturbation. |
+
+These are biases, not restrictions. Explicit base geometry, symmetry/order, distribution, centers, recursion, twist, noise, distortion, and broken symmetry always override suggestions. The UI uses **Style guided** to remove individual structure overrides; **Restore style defaults** clears all overrides but keeps complexity and a valid blend. Selecting a different style also clears overrides while retaining seed/complexity. Hybrid begins at 70% traditional / 30% geometric; an all-zero blend is an error with an explicit recovery action.
+
+Blend weights normalize before planning. Continuous properties (irregularity, ornament, recursion tendency, twist, distortion, noise) are weighted averages. Seeded weighted choices select categorical motifs/distributions per band; these need not exactly match the numeric percentages in a small number of bands. The highest-weight style chooses discrete base geometry, symmetry order/type, default center count, and polygon point defaults; ties follow traditional/geometric/organic/abstract order.
+
+Complexity is a planner input rather than a stored global recipe field: it creates 3-5 broad bands alternating with narrow borders (6-10 layers total), determines recursion tendency, and increases repetitions in detailed outer bands. Radii occupy 0.035-0.9 of the canvas radius with varying widths. Border distributions remain rings when a user overrides main-band distribution/recursion. Ornamental ring contours follow the annulus for broader, less stamp-like compositions; nested outlines and closed vein ribbons use finer strokes.
+
+Recursion adds scaled inset outlines around a motif's midpoint. The fixed planner multiplier is 0.62 (editable in engine recipes); the signed UI twist range is -1 to 1, applied as `twist × depth × 0.35` radians. Twist therefore needs a nonzero recursion depth to be visible. Branching also uses depth to grow a binary placement tree, capped at three branching levels. Noise/distortion transform endpoints and Bezier controls coherently before symmetry expansion. Independent random streams derive from seed/layer ID/offset and, for multiple centers, center index.
+
+Several centers place scaled rosettes at deterministic offsets. `GeometryModel.symmetry` reports `none`, order 1, when multiple centers or deliberate perturbation make a global symmetry claim unsafe; local rosettes still use the chosen expansion. Stroke widths scale with the rosettes. A 24,000-path hard limit throws a visible error instead of truncating or silently falling back.
+
+Styled subpaths are closed and individually suitable for enclosing coloring regions. Intersections, overlaps between rosettes, tiny details, and uneven region sizes are intentional rough edges; this is not a Boolean polygon solver. Raster region detection, minimum-area filtering, and corrections remain in Part 2. Automated checks cover reproducibility, normalization, overrides, all distributions, exact dihedral symmetry after transformations, closure, finite/bounded default output, recursion limits, excessive-scene errors, and editor recovery.
 
 ---
 

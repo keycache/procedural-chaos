@@ -122,6 +122,19 @@ Commit the source, configuration, documentation, and lockfile separately on the 
 
 **Done when:** each style and several hybrids produce visually distinct, reproducible line art suitable for coloring.
 
+**Implemented locally:** the studio now generates all four styles and normalized weighted hybrids. Seeded band planning alternates broader ornament bands with narrow beaded/interlocking borders; nested contours, veins, and varied stroke weights add detail. All six distributions and ten motifs are available in the engine, alongside bounded recursion/scaling, twist, distortion, noise, multiple focal centers, and deliberately broken symmetry. Styled subpaths are closed, with endpoint snapping and finite-coordinate validation. Arbitrary intersection simplification and region detection are not part of this closure pass.
+
+Minimal style, blend, complexity, placement, and growth controls are included now so the engine is testable; the full editor, workers/debouncing, saving, and exports remain in Phase 3. Generation has a 24,000-path safety limit and reports errors rather than silently truncating artwork. No commits or deployments are performed by the assistant.
+
+**UI checks:**
+
+1. Open `#/mandala`, then switch among the four styles. Expect distinct motifs/distributions; abstract starts with three focal centers.
+2. Select hybrid and vary the weights, including traditional/geometric and organic/abstract mixes. Expect reproducible combined rules and a normalized contribution summary. All-zero weights must show an error; restoring defaults or adding a positive weight recovers.
+3. Compare low/high complexity and different seeds. Expect changes in band hierarchy and detail; restoring the same seed/settings restores the exact drawing.
+4. Override base geometry, symmetry/divisions, all six distributions, and focal centers. Main bands change placement, while ornamental borders remain rings. Style-guided options and the restore button clear overrides.
+5. Expand growth controls; compare recursion depth 0/3, twist, noise, distortion, and broken symmetry. Transformations change geometry; broken symmetry/multiple centers are explicitly labeled.
+6. Verify zoom/pan/reset still work, empty seeds show errors instead of stale artwork, and Video Studio remains independent. Save/export remain disabled until Phase 3.
+
 ---
 
 ## Phase 3 — Part 1: Studio UI and outputs
