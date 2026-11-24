@@ -5,7 +5,7 @@ import { Preview } from '../../app/preview';
 import { StudioPlaceholder } from '../../app/studio-placeholder';
 import { Button } from '../../components/ui/button';
 import { errorMessage } from '../../shared/errors';
-import { editorRecipe } from './editor';
+import { editorRecipe, isPetalComposition } from './editor';
 import { ExportControls } from './export-controls';
 import { LayerControls } from './layer-controls';
 import { saveMandalaProject } from './projects';
@@ -136,7 +136,7 @@ export function MandalaStudio() {
       settings={
         <>
           <StyleControls recipe={plan.recipe} />
-          {mode !== 'bold-floral' && (
+          {!isPetalComposition(mode) && (
             <LayerControls layers={layers ?? plan.recipe?.layers ?? []} />
           )}
           <ExportControls
@@ -167,7 +167,7 @@ export function MandalaStudio() {
             <Preview
               label={
                 ready
-                  ? `${mode.toUpperCase()} / ${ready.pathCount} ${mode === 'bold-floral' ? 'PATHS' : 'CLOSED PATHS'}`
+                  ? `${mode.toUpperCase()} / ${ready.pathCount} ${isPetalComposition(mode) ? 'PATHS' : 'CLOSED PATHS'}`
                   : 'GENERATING IN A WORKER'
               }
             >
@@ -193,11 +193,13 @@ export function MandalaStudio() {
                 className="text-xs leading-relaxed text-muted-foreground"
                 aria-live="polite"
               >
-                {mode === 'bold-floral' ? (
+                {isPetalComposition(mode) ? (
                   <>
-                    Floral crowns / {plan.recipe.structure.symmetryOrder}-fold
-                    rotational symmetry / outlines, decorative strokes & ink
-                    accents
+                    {mode === 'ornate-lotus'
+                      ? 'Layered lotus crowns'
+                      : 'Floral crowns'}{' '}
+                    / {plan.recipe.structure.symmetryOrder}-fold rotational
+                    symmetry / outlines, decorative strokes & ink accents
                   </>
                 ) : (
                   <>

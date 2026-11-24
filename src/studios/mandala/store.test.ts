@@ -88,34 +88,59 @@ describe('style editor state', () => {
     expect(useMandalaStore.getState().options.centers).toBeUndefined();
   });
 
-  it('opts into floral geometry without carrying ring controls and restores custom layers through undo', () => {
+  it.each(['bold-floral', 'ornate-lotus'] as const)(
+    'opts into %s geometry without carrying ring controls and restores custom layers through undo',
+    (mode) => {
+      const state = useMandalaStore.getState();
+      state.addLayer();
+      state.setOptions({ centers: 3, noise: 0.4 });
+      state.addLayer();
+      const original = editorSnapshot(useMandalaStore.getState());
+      state.setMode(mode);
+      const floral = editorRecipe(useMandalaStore.getState());
+      expect(floral.composition?.family).toBe(mode);
+      expect(floral.layers).toEqual([]);
+      expect(floral.structure.symmetryOrder).toBe(8);
+      state.setOptions({ symmetryOrder: 12, complexity: 0.9 });
+      state.setGlobals({ strokeWidth: 3 });
+      expect(editorRecipe(useMandalaStore.getState())).toMatchObject({
+        composition: { complexity: 0.9 },
+        structure: { symmetryOrder: 12 },
+        global: { strokeWidth: 3 },
+      });
+
+      state.undo();
+      state.undo();
+      state.undo();
+      expect(editorSnapshot(useMandalaStore.getState())).toEqual(original);
+      state.redo();
+      expect(editorRecipe(useMandalaStore.getState())).toEqual(floral);
+      state.setMode('geometric');
+      expect(
+        editorRecipe(useMandalaStore.getState()).composition,
+      ).toBeUndefined();
+    },
+  );
+
+  it('clears floral ornament overrides for the curated lotus and restores them on undo', () => {
     const state = useMandalaStore.getState();
-    state.addLayer();
-    state.setOptions({ centers: 3, noise: 0.4 });
-    state.addLayer();
-    const original = editorSnapshot(useMandalaStore.getState());
-    state.setMode('bold-floral');
-    const floral = editorRecipe(useMandalaStore.getState());
-    expect(floral.composition?.family).toBe('bold-floral');
-    expect(floral.layers).toEqual([]);
-    expect(floral.structure.symmetryOrder).toBe(8);
-    state.setOptions({ symmetryOrder: 12, complexity: 0.9 });
-    state.setGlobals({ strokeWidth: 3 });
-    expect(editorRecipe(useMandalaStore.getState())).toMatchObject({
-      composition: { complexity: 0.9 },
-      structure: { symmetryOrder: 12 },
-      global: { strokeWidth: 3 },
-    });
+    state.applyPreset('floral-botanical');
+    const floral = editorSnapshot(useMandalaStore.getState());
+    state.applyPreset('ornate-lotus');
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('ornate-lotus');
+    expect(useMandalaStore.getState().ornament).toBeUndefined();
+    expect(() =>
+      editorRecipe({
+        ...editorSnapshot(useMandalaStore.getState()),
+        ornament: floral.ornament,
+      }),
+    ).toThrow('curated');
     state.undo();
-    state.undo();
-    state.undo();
-    expect(editorSnapshot(useMandalaStore.getState())).toEqual(original);
+    expect(editorSnapshot(useMandalaStore.getState())).toEqual(floral);
     state.redo();
-    expect(editorRecipe(useMandalaStore.getState())).toEqual(floral);
-    state.setMode('geometric');
-    expect(
-      editorRecipe(useMandalaStore.getState()).composition,
-    ).toBeUndefined();
+    const lotus = editorSnapshot(useMandalaStore.getState());
+    state.openProject(lotus, 'lotus-project');
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('ornate-lotus');
   });
 
   it('restores style defaults while preserving a valid custom blend', () => {

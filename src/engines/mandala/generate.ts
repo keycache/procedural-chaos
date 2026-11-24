@@ -14,6 +14,7 @@ import type { MotifId } from './recipe';
 import { symmetryOperations, transformPath } from './symmetry';
 import { closeContours, transformMotif } from './transforms';
 import { generateBoldFloral } from './bold-floral';
+import { generateOrnateLotus } from './ornate-lotus';
 
 const MAX_PATHS = 24_000;
 
@@ -42,7 +43,10 @@ function ornaments(motif: MotifId): PathCommand[][] {
 
 export function generateMandala(input: unknown): GeometryModel {
   const recipe = mandalaRecipeSchema.parse(input);
-  if (recipe.composition) return generateBoldFloral(recipe);
+  if (recipe.composition?.family === 'bold-floral')
+    return generateBoldFloral(recipe);
+  if (recipe.composition?.family === 'ornate-lotus')
+    return generateOrnateLotus(recipe);
   const { size } = recipe.canvas;
   const {
     symmetryOrder: order,

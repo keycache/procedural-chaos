@@ -15,11 +15,12 @@ import {
 } from '../../engines/mandala/styles';
 import { seedSchema } from '../../shared/schemas';
 import { createBoldFloralRecipe } from '../../engines/mandala/bold-floral';
+import { createOrnateLotusRecipe } from '../../engines/mandala/ornate-lotus';
 
 export const editorDocumentSchema = z.strictObject({
   name: z.string().trim().min(1, 'Enter a project name.').max(80),
   seed: seedSchema,
-  mode: z.enum([...styles, 'hybrid', 'bold-floral']),
+  mode: z.enum([...styles, 'hybrid', 'bold-floral', 'ornate-lotus']),
   blend: styleBlendSchema,
   options: styleOptionsSchema.omit({ seed: true, blend: true }),
   globals: z.strictObject({
@@ -35,6 +36,12 @@ export const editorDocumentSchema = z.strictObject({
 export type EditorDocument = z.output<typeof editorDocumentSchema>;
 export type EditorMode = EditorDocument['mode'];
 
+export function isPetalComposition(
+  mode: EditorMode,
+): mode is 'bold-floral' | 'ornate-lotus' {
+  return mode === 'bold-floral' || mode === 'ornate-lotus';
+}
+
 export function createEditorDocument(): EditorDocument {
   return {
     name: 'Lotus study',
@@ -49,7 +56,7 @@ export function createEditorDocument(): EditorDocument {
 }
 
 export function editorRecipe(document: EditorDocument): MandalaRecipe {
-  if (document.mode === 'bold-floral') {
+  if (isPetalComposition(document.mode)) {
     if (
       document.layers !== null ||
       Object.entries(document.options).some(
@@ -63,9 +70,17 @@ export function editorRecipe(document: EditorDocument): MandalaRecipe {
       )
     )
       throw new Error(
-        'Bold floral supports complexity, rotational divisions, and stroke width, not ring-layer or style overrides.',
+        'Petal compositions support complexity, rotational divisions, and stroke width, not ring-layer or style overrides.',
       );
-    const planned = createBoldFloralRecipe(
+    if (document.mode === 'ornate-lotus' && document.ornament)
+      throw new Error(
+        'Ornate lotus uses curated per-crown ornament treatments, not a global ornament override.',
+      );
+    const createRecipe =
+      document.mode === 'ornate-lotus'
+        ? createOrnateLotusRecipe
+        : createBoldFloralRecipe;
+    const planned = createRecipe(
       document.seed,
       document.options.complexity,
       document.options.symmetryOrder,
@@ -115,6 +130,15 @@ export function redistributeLayers(layers: LayerRecipe[]): LayerRecipe[] {
 }
 
 export const presets = [
+  {
+    id: 'ornate-lotus',
+    name: 'Ornate layered lotus',
+    description:
+      'Interleaved petal crowns, botanical filigree, and a nested central rosette.',
+    style: 'ornate-lotus',
+    seed: 'lotus-bloom-008',
+    complexity: 0.75,
+  },
   {
     id: 'floral',
     name: 'Floral flourish',
@@ -214,7 +238,7 @@ export function presetDocument(id: string): EditorDocument {
       'blend' in preset
         ? { ...preset.blend }
         : singleStyle(
-            preset.style === 'bold-floral' ? 'traditional' : preset.style,
+            isPetalComposition(preset.style) ? 'traditional' : preset.style,
           ),
     options: { complexity: preset.complexity },
     globals: {},

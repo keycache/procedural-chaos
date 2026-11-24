@@ -2,10 +2,10 @@
 
 A client-side creative playground built with Vite, React, TypeScript, shadcn/ui, and Tailwind CSS.
 
-- **Mandala Studio:** deterministic traditional, geometric, organic, abstract, and hybrid mandala line art.
+- **Mandala Studio:** deterministic traditional, geometric, organic, abstract, hybrid, bold-floral, and ornate-lotus mandala line art.
 - **Video Studio:** planned automated coloring videos using generated or imported artwork.
 
-Mandala Studio includes ten curated presets, random seeds and recent-seed history, global appearance and per-layer controls, undo/redo, background generation, SVG/PNG/JSON exports, and local project save/reopen. The engine includes four band-based styles and hybrids, a bold-floral composition with shape-aware ornament treatments, six distributions, recursive motifs, and multiple focal centers. Video creation remains planned.
+Mandala Studio includes eleven curated presets, random seeds and recent-seed history, global appearance and per-layer controls, undo/redo, background generation, SVG/PNG/JSON exports, and local project save/reopen. The engine includes four band-based styles and hybrids, bold-floral and ornate-lotus compositions with shape-aware ornament, six distributions, recursive motifs, and multiple focal centers. Video creation remains planned.
 
 Open `#/mandala` to try the generator. Identical seeds and settings produce identical line art. The Video Studio remains a placeholder; the landing page still offers the local-storage and Web Worker smoke tests.
 
@@ -19,7 +19,7 @@ No backend, accounts, or server-side processing are required. Desktop Chrome or 
 4. Under **Geometry & placement**, try a different base, symmetry, distribution, or number of focal centers. Explicit choices override style defaults. Narrow ornamental borders remain rings.
 5. Expand **Growth & transformations** and try recursion, twist, distortion, noise, and broken symmetry. Broken symmetry and multiple centers are labeled as not globally symmetric. **Restore style defaults** clears overrides; selecting a new style also clears them.
 6. Zoom, drag to pan, and reset the view. The mandala automatically scales to fit the preview's available width and height; reset restores this fitted view. On desktop, the canvas uses the available viewport height and stays beside the settings as you scroll; smaller screens keep the stacked layout. Video Studio remains an independent placeholder.
-7. Choose a **Composition preset**; its name stays selected while the composition matches it, including after undo/redo or reopening a saved project. Editing its settings shows **Custom composition**; renaming alone preserves the selection. Then try **Randomize seed** or reuse a **Recent seed**. The ten presets cover the four band-based styles, two hybrids, and four bold-floral treatments. Recent seeds and undo/redo are tab-session state, not permanent storage.
+7. Choose a **Composition preset**; its name stays selected while the composition matches it, including after undo/redo or reopening a saved project. Editing its settings shows **Custom composition**; renaming alone preserves the selection. Then try **Randomize seed** or reuse a **Recent seed**. The eleven presets cover the four band-based styles, two hybrids, four bold-floral treatments, and ornate layered lotus. Recent seeds and undo/redo are tab-session state, not permanent storage.
 8. Under **Global appearance**, vary density, negative space, irregularity, and stroke width. In **Layers**, add, duplicate, move, enable/disable, or remove bands; edit motifs, placement, radial bounds, and detail settings. Undo/redo must restore the exact drawing. Invalid layer edits show an error without hiding the editable controls.
 9. Give the project a name and **Save project**. Open **Library**, refresh, and reopen it: the exact custom recipe and drawing should return. Subsequent saves update that project; **Save a copy** creates another. Unsaved tab edits are lost on refresh.
 10. At the bottom of the settings, export **SVG**, **PNG**, and **JSON**. SVG includes recipe and geometry metadata. Choose PNG sizes from 1024 to 8192 pixels and white/transparent backgrounds. JSON is the exact engine recipe; JSON import is not yet a UI feature.
@@ -43,13 +43,23 @@ Select **Floral flourish** under **Composition preset**, or choose **bold-floral
 - Vary **Complexity** and **Ornament spacing**. Increasing spacing increases clearance and repeated-detail gaps; unsafe or undersized candidates are omitted and counted below the preview. Fine decoration stays subordinate to the large forms. Settings with no room for readable detail show an actionable error.
 - Select **Classic floral** to recover the original floral treatment exactly. Undo/redo, preset matching, Library save/reopen, and SVG/PNG/JSON exports include the new settings. Both new controls have info tooltips.
 
-The reusable vocabulary includes leaves, lotus petals, paisleys, scallops, curls, and beaded borders with motif-local contours, curved spines, and attachment points. This remains one floral composition family, not yet the ornate layered-lotus or full swirling-paisley composition planners. Fitting is not arbitrary collision packing; intentional vein/leaf attachments can meet. Region detection and coloring remain future work.
+The reusable vocabulary includes leaves, lotus petals, paisleys, scallops, curls, and beaded borders with motif-local contours, curved spines, and attachment points. It also decorates the separate ornate-lotus family below. Full swirling-paisley composition planning remains future work. Fitting is not arbitrary collision packing; intentional vein/leaf attachments can meet. Region detection and coloring remain future work.
+
+### Try the ornate layered lotus
+
+Select **Ornate layered lotus** under **Composition preset**, or **ornate-lotus** under **Generative style**. The curated starting point uses seed `lotus-bloom-008`, 75% complexity, eight divisions, and stroke width 2.5.
+
+- Expect six interleaved crowns: rounded outer scallops, dominant lotus petals, a double-count slender crown, curled inner petals, and two central rosette crowns. Fitted beads, botanical detail, and paisley curls alternate with quiet areas instead of adding circular separator bands.
+- Vary **Complexity** from low to high. Primary petal silhouettes and overlaps stay identical; the ornament changes. **Petal divisions** supports 6/8/10/12, with coordinated widths and offsets; the slender crown has twice that many petals.
+- Compare seeds `lotus-bloom-008`, `lotus-bloom-009`, and `lotus-bloom-010`, then restore the starting preset. Expect bounded variations and exact reproduction.
+- **Stroke width** is limited to 0.25–4 design units to preserve readable central ornaments. Treatment/spacing choices are curated per crown rather than exposed as global overrides. Inapplicable ring/layer/blend controls stay hidden; the new division label and existing dials have info tooltips.
+- Zoom into overlapping crowns and export SVG/PNG: rear outlines and ornament should disappear beneath foreground petals, without white backing paint in transparent exports. Save/reopen, preset highlighting, and Undo/Redo work as with other families.
 
 ### Current generation limits
 
 Style, blend, complexity, and structure/growth changes rebuild custom layers; global appearance changes preserve them. Adding/removing bands redistributes widths; moving swaps bands between radial slots. Use undo to recover an earlier composition.
 
-Band-based styled paths are closed and can enclose coloring regions, but dense intersections and tiny details are not automatically simplified. Floral drawings deliberately retain open decorative strokes separately from closed outlines; neither closure nor drawing roles guarantee clean coloring regions. Generation uses a Web Worker with a 200 ms debounce, cancellation/stale-result rejection, a 15-second timeout, and a 24,000-path band-engine limit. Classic floral stays below 1,500 drawing paths; shape-aware treatments additionally limit each decorated motif to 128 accepted paths and 256 fitting attempts, with at most 48 beads per border. Pending/error previews never silently export old artwork. Very large PNGs require more browser memory.
+Band-based styled paths are closed and can enclose coloring regions, but dense intersections and tiny details are not automatically simplified. Floral drawings deliberately retain open decorative strokes separately from closed outlines; neither closure nor drawing roles guarantee clean coloring regions. Generation uses a Web Worker with a 200 ms debounce, cancellation/stale-result rejection, a 15-second timeout, and a 24,000-path band-engine limit. Classic floral stays below 1,500 drawing paths; petal compositions have a 4,000-path ceiling. Shape-aware treatments additionally limit each decorated motif to 128 accepted paths and 256 fitting attempts, with at most 48 beads per border. Pending/error previews never silently export old artwork. Very large PNGs require more browser memory.
 
 ## Prerequisites
 

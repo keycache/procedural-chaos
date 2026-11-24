@@ -12,7 +12,7 @@ describe('portable mandala output', () => {
     await expect(exportPng('<svg />', 8193, 'white')).rejects.toThrow();
     await expect(exportPng('<svg />', 2048.5, 'white')).rejects.toThrow();
   });
-  it.each(['lotus', 'floral', 'floral-botanical'])(
+  it.each(['lotus', 'floral', 'floral-botanical', 'ornate-lotus'])(
     'round-trips an exact %s JSON recipe into identical artwork',
     (preset) => {
       const recipe = editorRecipe(presetDocument(preset));

@@ -9,6 +9,7 @@ import type { MandalaRecipe } from '../../engines/mandala/recipe';
 import { Button } from '../../components/ui/button';
 import { useMandalaStore } from './store';
 import { ControlLabel } from '../../components/control-label';
+import { isPetalComposition } from './editor';
 
 export const selectClass =
   'h-9 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50';
@@ -24,6 +25,8 @@ const descriptions = {
     'Combine style rules. Weights are normalized; they do not have to add up to 100%.',
   'bold-floral':
     'An art-directed flower with pointed crowns, nested leaves, curling tendrils, and solid ink accents. Foreground petals mask rear outlines without a white backing.',
+  'ornate-lotus':
+    'An interleaved layered flower: outer scallops, dominant botanical petals, offset slender crowns, and a nested central rosette. Foreground crowns mask rear outlines and detail without white paint.',
 };
 
 export function RangeControl({
@@ -88,7 +91,7 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
       <label htmlFor="generative-style" className="block space-y-2 text-sm">
         <ControlLabel
           label="Generative style"
-          help="Choose band-based styles, blend their rules with hybrid, or opt into the separate bold-floral composition. Changing style resets structure, appearance overrides, and custom layers; Undo can restore them."
+          help="Choose band-based styles, blend their rules with hybrid, or choose the separate bold-floral and ornate-lotus compositions. Changing style resets structure, appearance overrides, and custom layers; Undo can restore them."
         />
         <select
           id="generative-style"
@@ -100,11 +103,12 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
               ...styles,
               'hybrid' as const,
               'bold-floral' as const,
+              'ornate-lotus' as const,
             ].find((style) => style === event.target.value);
             if (value) setMode(value);
           }}
         >
-          {[...styles, 'hybrid', 'bold-floral'].map((style) => (
+          {[...styles, 'hybrid', 'bold-floral', 'ornate-lotus'].map((style) => (
             <option key={style} value={style}>
               {style}
             </option>
@@ -142,62 +146,72 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
       <RangeControl
         label="Complexity"
         help={
-          mode === 'bold-floral' && ornament
-            ? 'Controls bounded inset, bead, vein, nested-petal, or scroll detail for the selected ornament treatment. The main floral silhouette stays unchanged. Details without enough clearance are omitted and reported below the preview.'
-            : mode === 'bold-floral'
-              ? 'Adds leaf-border hatching, crown beads, inset outlines, and small curls while preserving the large floral silhouette. Detail is bounded to keep the flower readable.'
-              : 'Adds more decorative bands, nested outlines, and outer-band repetitions as it increases. This replans the composition and replaces custom layers; Undo can restore them.'
+          mode === 'ornate-lotus'
+            ? 'Enriches the curated per-crown botanical, beaded, and paisley detail while preserving all primary petal silhouettes and overlaps. Unsafe details are omitted and reported below the preview.'
+            : mode === 'bold-floral' && ornament
+              ? 'Controls bounded inset, bead, vein, nested-petal, or scroll detail for the selected ornament treatment. The main floral silhouette stays unchanged. Details without enough clearance are omitted and reported below the preview.'
+              : mode === 'bold-floral'
+                ? 'Adds leaf-border hatching, crown beads, inset outlines, and small curls while preserving the large floral silhouette. Detail is bounded to keep the flower readable.'
+                : 'Adds more decorative bands, nested outlines, and outer-band repetitions as it increases. This replans the composition and replaces custom layers; Undo can restore them.'
         }
         value={options.complexity ?? 0.65}
         onChange={(complexity) => setOptions({ complexity })}
       />
-      {mode === 'bold-floral' ? (
+      {isPetalComposition(mode) ? (
         <div className="space-y-5 border-t border-border pt-4">
-          <label className="block space-y-2 text-sm">
-            <ControlLabel
-              label="Ornament treatment"
-              help="Classic preserves the original floral drawing. Shape-aware treatments fit contour lace, botanical leaves, or paisley ornaments into crowns and leaves with measured border clearance. They do not change the overall composition family."
-            />
-            <select
-              aria-label="Ornament treatment"
-              className={selectClass}
-              value={ornament?.treatment ?? 'classic'}
-              onChange={(event) => {
-                const treatment = ornamentTreatments.find(
-                  (value) => value === event.target.value,
-                );
-                setOrnament(
-                  treatment
-                    ? {
-                        version: 1,
-                        treatment,
-                        spacing: ornament?.spacing ?? 0.35,
-                      }
-                    : undefined,
-                );
-              }}
-            >
-              <option value="classic">Classic floral</option>
-              <option value="contour">Contour lace</option>
-              <option value="botanical">Botanical filigree</option>
-              <option value="paisley">Paisley jewels</option>
-            </select>
-          </label>
-          {ornament && (
-            <RangeControl
-              label="Ornament spacing"
-              help="Increases border clearance and the gap between repeated ornaments. Minimum feature sizes and stroke-aware fitting prevent tiny or protruding details. At tight settings, the preview reports omitted details; if nothing readable fits, generation shows an error."
-              value={ornament.spacing}
-              onChange={(spacing) => setOrnament({ ...ornament, spacing })}
-            />
+          {mode === 'bold-floral' && (
+            <>
+              <label className="block space-y-2 text-sm">
+                <ControlLabel
+                  label="Ornament treatment"
+                  help="Classic preserves the original floral drawing. Shape-aware treatments fit contour lace, botanical leaves, or paisley ornaments into crowns and leaves with measured border clearance. They do not change the overall composition family."
+                />
+                <select
+                  aria-label="Ornament treatment"
+                  className={selectClass}
+                  value={ornament?.treatment ?? 'classic'}
+                  onChange={(event) => {
+                    const treatment = ornamentTreatments.find(
+                      (value) => value === event.target.value,
+                    );
+                    setOrnament(
+                      treatment
+                        ? {
+                            version: 1,
+                            treatment,
+                            spacing: ornament?.spacing ?? 0.35,
+                          }
+                        : undefined,
+                    );
+                  }}
+                >
+                  <option value="classic">Classic floral</option>
+                  <option value="contour">Contour lace</option>
+                  <option value="botanical">Botanical filigree</option>
+                  <option value="paisley">Paisley jewels</option>
+                </select>
+              </label>
+              {ornament && (
+                <RangeControl
+                  label="Ornament spacing"
+                  help="Increases border clearance and the gap between repeated ornaments. Minimum feature sizes and stroke-aware fitting prevent tiny or protruding details. At tight settings, the preview reports omitted details; if nothing readable fits, generation shows an error."
+                  value={ornament.spacing}
+                  onChange={(spacing) => setOrnament({ ...ornament, spacing })}
+                />
+              )}
+            </>
           )}
           <label className="block space-y-2 text-sm">
             <ControlLabel
-              label="Floral divisions"
-              help="Repeats the whole floral sector 6, 8, 10, or 12 times. Leaf and crown widths adapt to the sector; eight is the curated starting composition."
+              label={
+                mode === 'ornate-lotus' ? 'Petal divisions' : 'Floral divisions'
+              }
+              help="Repeats the whole flower sector 6, 8, 10, or 12 times. Crown widths and angular offsets adapt together; eight is the curated starting composition. The lotus secondary crown has twice this many petals."
             />
             <select
-              aria-label="Floral divisions"
+              aria-label={
+                mode === 'ornate-lotus' ? 'Petal divisions' : 'Floral divisions'
+              }
               className={selectClass}
               value={options.symmetryOrder ?? 8}
               onChange={(event) =>
@@ -213,18 +227,24 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
           </label>
           <RangeControl
             label="Stroke width"
-            help="Scales bold contours and fine interior lines together. Solid black accents keep their designed shape rather than growing with the stroke width."
+            help={
+              mode === 'ornate-lotus'
+                ? 'Scales the contour and fine-detail hierarchy. Limited to 4 design units to preserve readable central ornaments; filled accents keep their designed size.'
+                : 'Scales bold contours and fine interior lines together. Solid black accents keep their designed shape rather than growing with the stroke width.'
+            }
             value={globals.strokeWidth ?? 2.5}
             min={0.25}
-            max={8}
+            max={mode === 'ornate-lotus' ? 4 : 8}
             step={0.25}
             percent={false}
             onChange={(strokeWidth) => setGlobals({ strokeWidth })}
           />
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Seeds vary petal fullness, crown height, leaf tips, and curl turns
-            within a curated composition. Ring layers, hybrid weights, and
-            distribution/growth controls do not apply to this family.
+            {mode === 'ornate-lotus'
+              ? 'Seeds vary coordinated crown fullness, height, petal bend, and scrolls. Ornament treatments are curated per crown to balance quiet and dense areas.'
+              : 'Seeds vary petal fullness, crown height, leaf tips, and curl turns within a curated composition.'}{' '}
+            Ring layers, hybrid weights, and distribution/growth controls do not
+            apply to this family.
           </p>
         </div>
       ) : (
@@ -484,7 +504,7 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
         Restore style defaults
       </Button>
       <p className="text-xs leading-relaxed text-muted-foreground">
-        {mode === 'bold-floral' ? (
+        {isPetalComposition(mode) ? (
           'Switching families replaces custom geometry. Undo restores the previous composition. Floral artwork contains colorable outlines, decorative open strokes, and solid accents; clean coloring-region detection comes later.'
         ) : (
           <>

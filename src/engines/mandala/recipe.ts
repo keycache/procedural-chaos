@@ -104,6 +104,12 @@ export const floralCompositionSchema = z.strictObject({
   complexity: fraction,
   ornament: ornamentSettingsSchema.optional(),
 });
+export const ornateLotusCompositionSchema = z.strictObject({
+  family: z.literal('ornate-lotus'),
+  version: z.literal(1),
+  complexity: fraction,
+  ornament: z.never().optional(),
+});
 
 export const mandalaRecipeSchema = z
   .strictObject({
@@ -111,7 +117,12 @@ export const mandalaRecipeSchema = z
     engineVersion: z.literal(ENGINE_VERSION),
     seed: seedSchema,
     style: styleBlendSchema.optional(),
-    composition: floralCompositionSchema.optional(),
+    composition: z
+      .discriminatedUnion('family', [
+        floralCompositionSchema,
+        ornateLotusCompositionSchema,
+      ])
+      .optional(),
     canvas: z.strictObject({ size: z.number().int().min(128).max(4096) }),
     structure: z.strictObject({
       baseGeometry: z.enum(baseGeometries),
@@ -176,6 +187,17 @@ export const mandalaRecipeSchema = z
     });
     if (recipe.composition) {
       if (
+        recipe.composition.family === 'ornate-lotus' &&
+        recipe.global.strokeWidth > 4
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['global', 'strokeWidth'],
+          message:
+            'Ornate lotus supports stroke widths up to 4 to preserve readable central ornaments.',
+        });
+      }
+      if (
         recipe.layers.length !== 0 ||
         symmetryType !== 'rotational' ||
         ![6, 8, 10, 12].includes(symmetryOrder) ||
@@ -190,7 +212,7 @@ export const mandalaRecipeSchema = z
           code: 'custom',
           path: ['composition'],
           message:
-            'Bold floral uses no ring layers, one freeform center, 6/8/10/12 rotational divisions, and only stroke-width appearance overrides.',
+            'Petal compositions use no ring layers, one freeform center, 6/8/10/12 rotational divisions, and only stroke-width appearance overrides.',
         });
       }
     } else if (!recipe.layers.some((layer) => layer.enabled)) {

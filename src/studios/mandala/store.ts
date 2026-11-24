@@ -5,6 +5,7 @@ import {
   createEditorDocument,
   editorDocumentSchema,
   editorRecipe,
+  isPetalComposition,
   presetDocument,
   redistributeLayers,
   type EditorDocument,
@@ -65,7 +66,7 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
         blend:
           mode === 'hybrid'
             ? { traditional: 0.7, geometric: 0.3, organic: 0, abstract: 0 }
-            : singleStyle(mode === 'bold-floral' ? 'traditional' : mode),
+            : singleStyle(isPetalComposition(mode) ? 'traditional' : mode),
         options: { complexity: get().options.complexity },
         globals: {},
         layers: null,
@@ -89,7 +90,7 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
           ? get().blend
           : mode === 'hybrid'
             ? { traditional: 0.7, geometric: 0.3, organic: 0, abstract: 0 }
-            : singleStyle(mode === 'bold-floral' ? 'traditional' : mode),
+            : singleStyle(isPetalComposition(mode) ? 'traditional' : mode),
       });
     },
     applyPreset: (id) => commit(presetDocument(id)),

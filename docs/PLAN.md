@@ -173,7 +173,7 @@ SVG exports include recipe/center/symmetry metadata and path draw order; PNG sup
 
 **Goal:** Prove a visibly stronger design language with one convincing bold-floral composition before adding more controls or detail.
 
-**Status:** Implemented locally. Phases 3.3–3.5 remain planned. All generation remains deterministic and entirely client-side. The references guide visual qualities, not exact reproductions.
+**Status:** Implemented locally. Phases 3.4–3.5 remain planned. All generation remains deterministic and entirely client-side. The references guide visual qualities, not exact reproductions.
 
 - Build an art-directed floral composition with a central rosette, dominant leaves, alternating secondary petals, curling tendrils, and a scalloped outer silhouette.
 - Introduce compound Bézier motifs and tapered, selectively solid-black accents. Use expressive proportions and intentional empty space rather than increasing path count everywhere.
@@ -187,7 +187,7 @@ SVG exports include recipe/center/symmetry metadata and path draw order; PNG sup
 
 **Implemented locally:** the opt-in **bold-floral** style and **Floral flourish** preset use compound cubic-Bezier crowns, nested hatched leaves, mirrored curls, two central petal crowns, and tapered solid-black accents. Seeded variations change fullness, crown/leaf heights, and curl turns within the same art-directed composition. Six/eight/ten/twelve rotational divisions adapt motif widths; complexity adds bounded decoration without changing the primary silhouette, and stroke width preserves the contour/detail hierarchy.
 
-SVG foreground-silhouette masks remove rear lines behind closed foreground forms without white backing paint, preserving transparent exports. Paths carry explicit outline/decoration/solid-accent roles and occluder flags. A versioned optional composition recipe bypasses ring planning; existing recipes retain their original rendering. Inapplicable ring/layer/blend controls are hidden for floral mode. Workers, undo/redo, preset matching, Library save/reopen, and SVG/PNG/JSON exports are reused. The generalized ornament engine and additional composition families remain later phases. No commits or deployments are performed by the assistant.
+SVG foreground-silhouette masks remove rear lines behind closed foreground forms without white backing paint, preserving transparent exports. Paths carry explicit outline/decoration/solid-accent roles and occluder flags. A versioned optional composition recipe bypasses ring planning; existing recipes retain their original rendering. Inapplicable ring/layer/blend controls are hidden for floral mode. Workers, undo/redo, preset matching, Library save/reopen, and SVG/PNG/JSON exports are reused. The shared ornament vocabulary and ornate lotus are detailed below; swirling paisley remains planned. No commits or deployments are performed by the assistant.
 
 **UI checks:**
 
@@ -233,6 +233,8 @@ Candidate fitting measures stroke-aware border clearance and minimum feature siz
 
 **Goal:** Generate intricate botanical mandalas with overlapping petal crowns and nested ornament, inspired by the second reference.
 
+**Status:** Implemented locally as the opt-in **ornate-lotus** mode and **Ornate layered lotus** preset. Existing families and recipes remain unchanged.
+
 - Add a hierarchical composition planner: central rosette → dominant petal crowns → offset secondary crowns → outer scallops and border details.
 - Coordinate crown counts, angular offsets, petal lengths, and widths so layers interleave deliberately instead of colliding randomly.
 - Decorate each petal with the shape-aware vocabulary from Phase 3.2, keeping interior ornament subordinate to its parent shape.
@@ -242,11 +244,19 @@ Candidate fitting measures stroke-aware border clearance and minimum feature siz
 
 **Done when:** the design reads as a layered flower at thumbnail size and reveals coherent nested botanical detail when enlarged, without a mesh of uncontrolled intersections.
 
+**Implemented locally:** six coordinated crowns progress from outer scallops through dominant lotus petals and a double-count offset leaf crown to curled inner petals and two rosette crowns. Shape-aware templates provide subordinate insets, beaded borders, botanical veins/leaf sprays, and paisley curls. Per-crown spacing/detail budgets balance quiet areas with dense ones; complexity preserves the primary silhouettes. Seeded fullness, heights, bend, and scrolls vary within the curated composition.
+
+All petal control points stay inside disjoint convex angular envelopes, preventing sibling intersections without breaking rotational symmetry. A shared petal-composition builder emits contiguous back-to-front crown groups for the existing transparent SVG silhouette masks: later crowns hide both rear outlines and ornaments. Six/eight/ten/twelve divisions coordinate crown widths/counts/offsets. Stroke widths are limited to 0.25–4 to keep central ornaments readable. Runtime generation is capped at 4,000 paths with explicit fitting errors and omitted-detail reporting.
+
+An additive version-1 composition recipe, editor mode/preset, contextual help, history/default resets, Library storage, and SVG/PNG/JSON outputs reuse existing infrastructure. Ring/layer/blend and global ornament-override controls are intentionally absent in lotus mode. No commits or deployments are performed.
+
 **UI checks:**
 
 1. Select the ornate-lotus preset. Expect interleaved petal crowns and a clear center-to-edge hierarchy distinct from the bold-floral family.
 2. Compare lower/higher detail and several seeds. Large floral structure should stay readable while interior ornament changes.
 3. Inspect overlapping petals at high zoom and in SVG/PNG exports. Rear outlines must not bleed through foreground forms.
+4. Compare 6/8/10/12 Petal divisions, restore the preset, and undo a style switch. Expect coordinated crowns, accurate selected-preset state, and exact artwork restoration.
+5. Save/reopen through Library after refresh, then export SVG, JSON, and transparent/white PNGs. Expect the same recipe/artwork and no opaque white petal interiors in transparent output.
 
 ---
 
