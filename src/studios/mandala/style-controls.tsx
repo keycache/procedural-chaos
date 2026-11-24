@@ -4,12 +4,13 @@ import {
   styles,
   symmetryTypes,
   ornamentTreatments,
+  defaultSwirlSettings,
 } from '../../engines/mandala/recipe';
 import type { MandalaRecipe } from '../../engines/mandala/recipe';
 import { Button } from '../../components/ui/button';
 import { useMandalaStore } from './store';
 import { ControlLabel } from '../../components/control-label';
-import { isPetalComposition } from './editor';
+import { isArtDirectedComposition } from './editor';
 
 export const selectClass =
   'h-9 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50';
@@ -27,6 +28,8 @@ const descriptions = {
     'An art-directed flower with pointed crowns, nested leaves, curling tendrils, and solid ink accents. Foreground petals mask rear outlines without a white backing.',
   'ornate-lotus':
     'An interleaved layered flower: outer scallops, dominant botanical petals, offset slender crowns, and a nested central rosette. Foreground crowns mask rear outlines and detail without white paint.',
+  'swirling-paisley':
+    'Coordinated paisley wings follow curved spines around the center, with feather filigree, fitted pocket jewels, and tapered black accents. This is a separate flowing planner, not twisted lotus crowns.',
 };
 
 export function RangeControl({
@@ -83,6 +86,8 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
     setGlobals,
     ornament,
     setOrnament,
+    swirl,
+    setSwirl,
   } = useMandalaStore();
   const total = Object.values(blend).reduce((sum, value) => sum + value, 0);
   return (
@@ -91,7 +96,7 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
       <label htmlFor="generative-style" className="block space-y-2 text-sm">
         <ControlLabel
           label="Generative style"
-          help="Choose band-based styles, blend their rules with hybrid, or choose the separate bold-floral and ornate-lotus compositions. Changing style resets structure, appearance overrides, and custom layers; Undo can restore them."
+          help="Choose band-based styles, their hybrid blend, or separate floral, layered-lotus, and swirling-paisley compositions. Changing style resets structure, appearance overrides, and custom layers; Undo can restore them."
         />
         <select
           id="generative-style"
@@ -104,11 +109,18 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
               'hybrid' as const,
               'bold-floral' as const,
               'ornate-lotus' as const,
+              'swirling-paisley' as const,
             ].find((style) => style === event.target.value);
             if (value) setMode(value);
           }}
         >
-          {[...styles, 'hybrid', 'bold-floral', 'ornate-lotus'].map((style) => (
+          {[
+            ...styles,
+            'hybrid',
+            'bold-floral',
+            'ornate-lotus',
+            'swirling-paisley',
+          ].map((style) => (
             <option key={style} value={style}>
               {style}
             </option>
@@ -146,18 +158,20 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
       <RangeControl
         label="Complexity"
         help={
-          mode === 'ornate-lotus'
-            ? 'Enriches the curated per-crown botanical, beaded, and paisley detail while preserving all primary petal silhouettes and overlaps. Unsafe details are omitted and reported below the preview.'
-            : mode === 'bold-floral' && ornament
-              ? 'Controls bounded inset, bead, vein, nested-petal, or scroll detail for the selected ornament treatment. The main floral silhouette stays unchanged. Details without enough clearance are omitted and reported below the preview.'
-              : mode === 'bold-floral'
-                ? 'Adds leaf-border hatching, crown beads, inset outlines, and small curls while preserving the large floral silhouette. Detail is bounded to keep the flower readable.'
-                : 'Adds more decorative bands, nested outlines, and outer-band repetitions as it increases. This replans the composition and replaces custom layers; Undo can restore them.'
+          mode === 'swirling-paisley'
+            ? 'Progresses from plain flowing outlines to inset borders, branching feather forms, nested teardrops, and fine scalloped filigree. Detail is fitted inside exposed wings, rather than hidden beneath foreground crowns.'
+            : mode === 'ornate-lotus'
+              ? 'Enriches the curated per-crown botanical, beaded, and paisley detail while preserving all primary petal silhouettes and overlaps. Unsafe details are omitted and reported below the preview.'
+              : mode === 'bold-floral' && ornament
+                ? 'Controls bounded inset, bead, vein, nested-petal, or scroll detail for the selected ornament treatment. The main floral silhouette stays unchanged. Details without enough clearance are omitted and reported below the preview.'
+                : mode === 'bold-floral'
+                  ? 'Adds leaf-border hatching, crown beads, inset outlines, and small curls while preserving the large floral silhouette. Detail is bounded to keep the flower readable.'
+                  : 'Adds more decorative bands, nested outlines, and outer-band repetitions as it increases. This replans the composition and replaces custom layers; Undo can restore them.'
         }
         value={options.complexity ?? 0.65}
         onChange={(complexity) => setOptions({ complexity })}
       />
-      {isPetalComposition(mode) ? (
+      {isArtDirectedComposition(mode) ? (
         <div className="space-y-5 border-t border-border pt-4">
           {mode === 'bold-floral' && (
             <>
@@ -201,16 +215,61 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
               )}
             </>
           )}
+          {mode === 'swirling-paisley' && (
+            <>
+              <label className="block space-y-2 text-sm">
+                <ControlLabel
+                  label="Swirl direction"
+                  help="Mirrors the entire flowing composition, including its ornaments and black pockets. Rotational symmetry and the seed remain unchanged."
+                />
+                <select
+                  aria-label="Swirl direction"
+                  className={selectClass}
+                  value={swirl?.direction ?? defaultSwirlSettings.direction}
+                  onChange={(event) => {
+                    const direction = event.target.value;
+                    if (
+                      direction === 'clockwise' ||
+                      direction === 'counterclockwise'
+                    )
+                      setSwirl({
+                        ...(swirl ?? defaultSwirlSettings),
+                        direction,
+                      });
+                  }}
+                >
+                  <option value="clockwise">Clockwise</option>
+                  <option value="counterclockwise">Counterclockwise</option>
+                </select>
+              </label>
+              <RangeControl
+                label="Swirl strength"
+                help="Bends all wing spines, feather interiors, and pocket placements together. Zero removes the added spiral sweep; higher values increase coordinated rotation from center to edge."
+                value={swirl?.strength ?? defaultSwirlSettings.strength}
+                onChange={(strength) =>
+                  setSwirl({ ...(swirl ?? defaultSwirlSettings), strength })
+                }
+              />
+            </>
+          )}
           <label className="block space-y-2 text-sm">
             <ControlLabel
               label={
-                mode === 'ornate-lotus' ? 'Petal divisions' : 'Floral divisions'
+                mode === 'swirling-paisley'
+                  ? 'Swirl divisions'
+                  : mode === 'ornate-lotus'
+                    ? 'Petal divisions'
+                    : 'Floral divisions'
               }
-              help="Repeats the whole flower sector 6, 8, 10, or 12 times. Crown widths and angular offsets adapt together; eight is the curated starting composition. The lotus secondary crown has twice this many petals."
+              help="Repeats a complete coordinated sector 6, 8, 10, or 12 times. Widths and placement adapt together; eight is the curated starting composition. The lotus secondary crown has twice this many petals."
             />
             <select
               aria-label={
-                mode === 'ornate-lotus' ? 'Petal divisions' : 'Floral divisions'
+                mode === 'swirling-paisley'
+                  ? 'Swirl divisions'
+                  : mode === 'ornate-lotus'
+                    ? 'Petal divisions'
+                    : 'Floral divisions'
               }
               className={selectClass}
               value={options.symmetryOrder ?? 8}
@@ -228,21 +287,23 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
           <RangeControl
             label="Stroke width"
             help={
-              mode === 'ornate-lotus'
+              mode !== 'bold-floral'
                 ? 'Scales the contour and fine-detail hierarchy. Limited to 4 design units to preserve readable central ornaments; filled accents keep their designed size.'
                 : 'Scales bold contours and fine interior lines together. Solid black accents keep their designed shape rather than growing with the stroke width.'
             }
             value={globals.strokeWidth ?? 2.5}
             min={0.25}
-            max={mode === 'ornate-lotus' ? 4 : 8}
+            max={mode !== 'bold-floral' ? 4 : 8}
             step={0.25}
             percent={false}
             onChange={(strokeWidth) => setGlobals({ strokeWidth })}
           />
           <p className="text-xs leading-relaxed text-muted-foreground">
-            {mode === 'ornate-lotus'
-              ? 'Seeds vary coordinated crown fullness, height, petal bend, and scrolls. Ornament treatments are curated per crown to balance quiet and dense areas.'
-              : 'Seeds vary petal fullness, crown height, leaf tips, and curl turns within a curated composition.'}{' '}
+            {mode === 'swirling-paisley'
+              ? 'Seeds vary coordinated wing fullness and reach. Smaller jewels are placed only where clearance remains between sweeping forms.'
+              : mode === 'ornate-lotus'
+                ? 'Seeds vary coordinated crown fullness, height, petal bend, and scrolls. Ornament treatments are curated per crown to balance quiet and dense areas.'
+                : 'Seeds vary petal fullness, crown height, leaf tips, and curl turns within a curated composition.'}{' '}
             Ring layers, hybrid weights, and distribution/growth controls do not
             apply to this family.
           </p>
@@ -504,8 +565,8 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
         Restore style defaults
       </Button>
       <p className="text-xs leading-relaxed text-muted-foreground">
-        {isPetalComposition(mode) ? (
-          'Switching families replaces custom geometry. Undo restores the previous composition. Floral artwork contains colorable outlines, decorative open strokes, and solid accents; clean coloring-region detection comes later.'
+        {isArtDirectedComposition(mode) ? (
+          'Switching families replaces custom geometry. Undo restores the previous composition. Ornamental artwork contains closed outlines, decorative open strokes, and solid accents; clean coloring-region detection comes later.'
         ) : (
           <>
             Narrow bands stay ornamental borders. Distribution and recursion

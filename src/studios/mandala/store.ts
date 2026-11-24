@@ -1,11 +1,15 @@
 import { create } from 'zustand';
 import { singleStyle } from '../../engines/mandala/styles';
-import type { LayerRecipe, Style } from '../../engines/mandala/recipe';
+import {
+  defaultSwirlSettings,
+  type LayerRecipe,
+  type Style,
+} from '../../engines/mandala/recipe';
 import {
   createEditorDocument,
   editorDocumentSchema,
   editorRecipe,
-  isPetalComposition,
+  isArtDirectedComposition,
   presetDocument,
   redistributeLayers,
   type EditorDocument,
@@ -24,6 +28,7 @@ type MandalaState = EditorDocument & {
   setOptions: (options: Partial<EditorDocument['options']>) => void;
   setGlobals: (globals: EditorDocument['globals']) => void;
   setOrnament: (ornament: EditorDocument['ornament']) => void;
+  setSwirl: (swirl: NonNullable<EditorDocument['swirl']>) => void;
   resetOverrides: () => void;
   applyPreset: (id: string) => void;
   editLayer: (id: string, change: Partial<LayerRecipe>) => void;
@@ -38,8 +43,9 @@ type MandalaState = EditorDocument & {
 };
 
 export function editorSnapshot(state: EditorDocument): EditorDocument {
-  const { name, seed, mode, blend, options, globals, layers, ornament } = state;
-  return { name, seed, mode, blend, options, globals, layers, ornament };
+  const { name, seed, mode, blend, options, globals, layers, ornament, swirl } =
+    state;
+  return { name, seed, mode, blend, options, globals, layers, ornament, swirl };
 }
 
 export const useMandalaStore = create<MandalaState>((set, get) => {
@@ -66,11 +72,15 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
         blend:
           mode === 'hybrid'
             ? { traditional: 0.7, geometric: 0.3, organic: 0, abstract: 0 }
-            : singleStyle(isPetalComposition(mode) ? 'traditional' : mode),
+            : singleStyle(
+                isArtDirectedComposition(mode) ? 'traditional' : mode,
+              ),
         options: { complexity: get().options.complexity },
         globals: {},
         layers: null,
         ornament: undefined,
+        swirl:
+          mode === 'swirling-paisley' ? { ...defaultSwirlSettings } : undefined,
       }),
     setWeight: (style, weight) =>
       commit({ blend: { ...get().blend, [style]: weight }, layers: null }),
@@ -79,6 +89,7 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
     setGlobals: (globals) =>
       commit({ globals: { ...get().globals, ...globals } }),
     setOrnament: (ornament) => commit({ ornament }),
+    setSwirl: (swirl) => commit({ swirl }),
     resetOverrides: () => {
       const mode = get().mode;
       commit({
@@ -86,11 +97,15 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
         globals: {},
         layers: null,
         ornament: undefined,
+        swirl:
+          mode === 'swirling-paisley' ? { ...defaultSwirlSettings } : undefined,
         blend: Object.values(get().blend).some((weight) => weight > 0)
           ? get().blend
           : mode === 'hybrid'
             ? { traditional: 0.7, geometric: 0.3, organic: 0, abstract: 0 }
-            : singleStyle(isPetalComposition(mode) ? 'traditional' : mode),
+            : singleStyle(
+                isArtDirectedComposition(mode) ? 'traditional' : mode,
+              ),
       });
     },
     applyPreset: (id) => commit(presetDocument(id)),
@@ -185,6 +200,7 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
       set({
         ...document,
         ornament: document.ornament,
+        swirl: document.swirl,
         projectId,
         past: [],
         future: [],

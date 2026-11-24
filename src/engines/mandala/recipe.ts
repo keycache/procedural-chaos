@@ -110,6 +110,22 @@ export const ornateLotusCompositionSchema = z.strictObject({
   complexity: fraction,
   ornament: z.never().optional(),
 });
+export const swirlSettingsSchema = z.strictObject({
+  direction: z.enum(['clockwise', 'counterclockwise']),
+  strength: fraction,
+});
+export type SwirlSettings = z.infer<typeof swirlSettingsSchema>;
+export const defaultSwirlSettings: SwirlSettings = {
+  direction: 'clockwise',
+  strength: 0.7,
+};
+export const swirlingPaisleyCompositionSchema = z.strictObject({
+  family: z.literal('swirling-paisley'),
+  version: z.literal(1),
+  complexity: fraction,
+  swirl: swirlSettingsSchema,
+  ornament: z.never().optional(),
+});
 
 export const mandalaRecipeSchema = z
   .strictObject({
@@ -121,6 +137,7 @@ export const mandalaRecipeSchema = z
       .discriminatedUnion('family', [
         floralCompositionSchema,
         ornateLotusCompositionSchema,
+        swirlingPaisleyCompositionSchema,
       ])
       .optional(),
     canvas: z.strictObject({ size: z.number().int().min(128).max(4096) }),
@@ -187,14 +204,14 @@ export const mandalaRecipeSchema = z
     });
     if (recipe.composition) {
       if (
-        recipe.composition.family === 'ornate-lotus' &&
+        recipe.composition.family !== 'bold-floral' &&
         recipe.global.strokeWidth > 4
       ) {
         context.addIssue({
           code: 'custom',
           path: ['global', 'strokeWidth'],
           message:
-            'Ornate lotus supports stroke widths up to 4 to preserve readable central ornaments.',
+            'Ornate compositions support stroke widths up to 4 to preserve readable ornaments.',
         });
       }
       if (

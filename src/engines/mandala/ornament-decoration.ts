@@ -91,6 +91,17 @@ export function pathFits(
       'Ornament fitting needs a path, a usable boundary, and finite nonnegative clearance.',
     );
   const steps = 24;
+  const guard = pathTravelGuard(path, steps);
+  return sampleContour(path, steps).every(
+    (point) => borderClearance(polygon, point) >= clearance + guard,
+  );
+}
+
+export function pathTravelGuard(path: PathCommand[], steps: number): number {
+  if (!Number.isInteger(steps) || steps < 2 || steps > 64)
+    throw new Error(
+      'Curve travel bounds require between 2 and 64 subdivisions.',
+    );
   let current: Point | undefined;
   let guard = 0;
   for (const command of path) {
@@ -127,9 +138,7 @@ export function pathFits(
       current = command.to;
     }
   }
-  return sampleContour(path, steps).every(
-    (point) => borderClearance(polygon, point) >= clearance + guard,
-  );
+  return guard;
 }
 
 function scaledContour(shape: OrnamentShape, factor: number) {

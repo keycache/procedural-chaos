@@ -5,7 +5,7 @@ import { Preview } from '../../app/preview';
 import { StudioPlaceholder } from '../../app/studio-placeholder';
 import { Button } from '../../components/ui/button';
 import { errorMessage } from '../../shared/errors';
-import { editorRecipe, isPetalComposition } from './editor';
+import { editorRecipe, isArtDirectedComposition } from './editor';
 import { ExportControls } from './export-controls';
 import { LayerControls } from './layer-controls';
 import { saveMandalaProject } from './projects';
@@ -24,6 +24,7 @@ export function MandalaStudio() {
     options,
     globals,
     ornament,
+    swirl,
     layers,
     name,
     past,
@@ -45,13 +46,14 @@ export function MandalaStudio() {
           options,
           globals,
           ornament,
+          swirl,
           layers,
         }),
       };
     } catch (error) {
       return { error: errorMessage(error) };
     }
-  }, [seed, mode, blend, options, globals, layers, ornament]);
+  }, [seed, mode, blend, options, globals, layers, ornament, swirl]);
   const generation = useGeneration(plan.recipe);
   const ready =
     generation && 'result' in generation ? generation.result : undefined;
@@ -136,7 +138,7 @@ export function MandalaStudio() {
       settings={
         <>
           <StyleControls recipe={plan.recipe} />
-          {!isPetalComposition(mode) && (
+          {!isArtDirectedComposition(mode) && (
             <LayerControls layers={layers ?? plan.recipe?.layers ?? []} />
           )}
           <ExportControls
@@ -167,7 +169,7 @@ export function MandalaStudio() {
             <Preview
               label={
                 ready
-                  ? `${mode.toUpperCase()} / ${ready.pathCount} ${isPetalComposition(mode) ? 'PATHS' : 'CLOSED PATHS'}`
+                  ? `${mode.toUpperCase()} / ${ready.pathCount} ${isArtDirectedComposition(mode) ? 'PATHS' : 'CLOSED PATHS'}`
                   : 'GENERATING IN A WORKER'
               }
             >
@@ -193,11 +195,13 @@ export function MandalaStudio() {
                 className="text-xs leading-relaxed text-muted-foreground"
                 aria-live="polite"
               >
-                {isPetalComposition(mode) ? (
+                {isArtDirectedComposition(mode) ? (
                   <>
-                    {mode === 'ornate-lotus'
-                      ? 'Layered lotus crowns'
-                      : 'Floral crowns'}{' '}
+                    {mode === 'swirling-paisley'
+                      ? 'Flowing paisley wings'
+                      : mode === 'ornate-lotus'
+                        ? 'Layered lotus crowns'
+                        : 'Floral crowns'}{' '}
                     / {plan.recipe.structure.symmetryOrder}-fold rotational
                     symmetry / outlines, decorative strokes & ink accents
                   </>

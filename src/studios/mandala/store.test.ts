@@ -88,7 +88,7 @@ describe('style editor state', () => {
     expect(useMandalaStore.getState().options.centers).toBeUndefined();
   });
 
-  it.each(['bold-floral', 'ornate-lotus'] as const)(
+  it.each(['bold-floral', 'ornate-lotus', 'swirling-paisley'] as const)(
     'opts into %s geometry without carrying ring controls and restores custom layers through undo',
     (mode) => {
       const state = useMandalaStore.getState();
@@ -141,6 +141,36 @@ describe('style editor state', () => {
     const lotus = editorSnapshot(useMandalaStore.getState());
     state.openProject(lotus, 'lotus-project');
     expect(matchingPresetId(useMandalaStore.getState())).toBe('ornate-lotus');
+  });
+
+  it('includes swirl controls in history, presets, defaults, and reopening older documents', () => {
+    const state = useMandalaStore.getState();
+    state.applyPreset('swirling-paisley');
+    const original = editorSnapshot(useMandalaStore.getState());
+    const implicitDefaults = { ...original, swirl: undefined };
+    expect(editorRecipe(implicitDefaults)).toEqual(editorRecipe(original));
+    expect(matchingPresetId(implicitDefaults)).toBe('swirling-paisley');
+    state.setSwirl({ direction: 'counterclockwise', strength: 1 });
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('');
+    expect(editorRecipe(useMandalaStore.getState()).composition).toMatchObject({
+      swirl: { direction: 'counterclockwise', strength: 1 },
+    });
+    state.undo();
+    expect(editorSnapshot(useMandalaStore.getState())).toEqual(original);
+    expect(matchingPresetId(useMandalaStore.getState())).toBe(
+      'swirling-paisley',
+    );
+    state.redo();
+    state.resetOverrides();
+    expect(useMandalaStore.getState().swirl).toEqual(original.swirl);
+    state.setMode('ornate-lotus');
+    expect(useMandalaStore.getState().swirl).toBeUndefined();
+    state.undo();
+    state.openProject(createEditorDocument(), 'old-project');
+    expect(useMandalaStore.getState().swirl).toBeUndefined();
+    expect(() =>
+      editorRecipe({ ...createEditorDocument(), swirl: original.swirl }),
+    ).toThrow('Swirl settings');
   });
 
   it('restores style defaults while preserving a valid custom blend', () => {

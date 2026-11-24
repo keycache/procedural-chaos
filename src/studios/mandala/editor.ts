@@ -5,6 +5,8 @@ import {
   styleBlendSchema,
   styles,
   ornamentSettingsSchema,
+  swirlSettingsSchema,
+  defaultSwirlSettings,
   type LayerRecipe,
   type MandalaRecipe,
 } from '../../engines/mandala/recipe';
@@ -16,11 +18,18 @@ import {
 import { seedSchema } from '../../shared/schemas';
 import { createBoldFloralRecipe } from '../../engines/mandala/bold-floral';
 import { createOrnateLotusRecipe } from '../../engines/mandala/ornate-lotus';
+import { createSwirlingPaisleyRecipe } from '../../engines/mandala/swirling-paisley';
 
 export const editorDocumentSchema = z.strictObject({
   name: z.string().trim().min(1, 'Enter a project name.').max(80),
   seed: seedSchema,
-  mode: z.enum([...styles, 'hybrid', 'bold-floral', 'ornate-lotus']),
+  mode: z.enum([
+    ...styles,
+    'hybrid',
+    'bold-floral',
+    'ornate-lotus',
+    'swirling-paisley',
+  ]),
   blend: styleBlendSchema,
   options: styleOptionsSchema.omit({ seed: true, blend: true }),
   globals: z.strictObject({
@@ -31,15 +40,20 @@ export const editorDocumentSchema = z.strictObject({
   }),
   layers: z.array(layerSchema).min(1).max(12).nullable(),
   ornament: ornamentSettingsSchema.optional(),
+  swirl: swirlSettingsSchema.optional(),
 });
 
 export type EditorDocument = z.output<typeof editorDocumentSchema>;
 export type EditorMode = EditorDocument['mode'];
 
-export function isPetalComposition(
+export function isArtDirectedComposition(
   mode: EditorMode,
-): mode is 'bold-floral' | 'ornate-lotus' {
-  return mode === 'bold-floral' || mode === 'ornate-lotus';
+): mode is 'bold-floral' | 'ornate-lotus' | 'swirling-paisley' {
+  return (
+    mode === 'bold-floral' ||
+    mode === 'ornate-lotus' ||
+    mode === 'swirling-paisley'
+  );
 }
 
 export function createEditorDocument(): EditorDocument {
@@ -52,11 +66,14 @@ export function createEditorDocument(): EditorDocument {
     globals: {},
     layers: null,
     ornament: undefined,
+    swirl: undefined,
   };
 }
 
 export function editorRecipe(document: EditorDocument): MandalaRecipe {
-  if (isPetalComposition(document.mode)) {
+  if (document.mode !== 'swirling-paisley' && document.swirl)
+    throw new Error('Swirl settings require the swirling-paisley composition.');
+  if (isArtDirectedComposition(document.mode)) {
     if (
       document.layers !== null ||
       Object.entries(document.options).some(
@@ -70,21 +87,29 @@ export function editorRecipe(document: EditorDocument): MandalaRecipe {
       )
     )
       throw new Error(
-        'Petal compositions support complexity, rotational divisions, and stroke width, not ring-layer or style overrides.',
+        'Art-directed compositions support complexity, rotational divisions, and stroke width, not ring-layer or style overrides.',
       );
-    if (document.mode === 'ornate-lotus' && document.ornament)
+    if (document.mode !== 'bold-floral' && document.ornament)
       throw new Error(
-        'Ornate lotus uses curated per-crown ornament treatments, not a global ornament override.',
+        'This family uses curated ornament treatments, not a global ornament override.',
       );
     const createRecipe =
       document.mode === 'ornate-lotus'
         ? createOrnateLotusRecipe
         : createBoldFloralRecipe;
-    const planned = createRecipe(
-      document.seed,
-      document.options.complexity,
-      document.options.symmetryOrder,
-    );
+    const planned =
+      document.mode === 'swirling-paisley'
+        ? createSwirlingPaisleyRecipe(
+            document.seed,
+            document.options.complexity,
+            document.options.symmetryOrder,
+            document.swirl,
+          )
+        : createRecipe(
+            document.seed,
+            document.options.complexity,
+            document.options.symmetryOrder,
+          );
     return mandalaRecipeSchema.parse({
       ...planned,
       composition: { ...planned.composition, ornament: document.ornament },
@@ -130,6 +155,15 @@ export function redistributeLayers(layers: LayerRecipe[]): LayerRecipe[] {
 }
 
 export const presets = [
+  {
+    id: 'swirling-paisley',
+    name: 'Paisley current',
+    description:
+      'Sweeping curved paisley wings, feather filigree, and selective black pockets.',
+    style: 'swirling-paisley',
+    seed: 'paisley-flow-008',
+    complexity: 0.7,
+  },
   {
     id: 'ornate-lotus',
     name: 'Ornate layered lotus',
@@ -238,12 +272,18 @@ export function presetDocument(id: string): EditorDocument {
       'blend' in preset
         ? { ...preset.blend }
         : singleStyle(
-            isPetalComposition(preset.style) ? 'traditional' : preset.style,
+            isArtDirectedComposition(preset.style)
+              ? 'traditional'
+              : preset.style,
           ),
     options: { complexity: preset.complexity },
     globals: {},
     layers: null,
     ornament: 'ornament' in preset ? { ...preset.ornament } : undefined,
+    swirl:
+      preset.style === 'swirling-paisley'
+        ? { ...defaultSwirlSettings }
+        : undefined,
   };
 }
 
@@ -254,6 +294,10 @@ export function matchingPresetId(document: EditorDocument): string {
     Object.keys(document.options).length !== 1
   )
     return '';
+  const swirl =
+    document.mode === 'swirling-paisley'
+      ? (document.swirl ?? defaultSwirlSettings)
+      : document.swirl;
   return (
     presets.find((preset) => {
       const expected = presetDocument(preset.id);
@@ -263,6 +307,8 @@ export function matchingPresetId(document: EditorDocument): string {
         document.options.complexity === expected.options.complexity &&
         document.ornament?.treatment === expected.ornament?.treatment &&
         document.ornament?.spacing === expected.ornament?.spacing &&
+        swirl?.direction === expected.swirl?.direction &&
+        swirl?.strength === expected.swirl?.strength &&
         styles.every((style) => document.blend[style] === expected.blend[style])
       );
     })?.id ?? ''

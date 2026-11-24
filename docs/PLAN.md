@@ -273,11 +273,23 @@ An additive version-1 composition recipe, editor mode/preset, contextual help, h
 
 **Done when:** the result has continuous sweeping motion, layered internal textures, and deliberate dark/light balance—not scattered paisleys or a distorted ring preset.
 
+**Implemented locally:** a separate version-1 `swirling-paisley` planner traces cubic contours through a coordinated polar field. Seeded wing fullness/reach, 6/8/10/12 rotational copies, direction mirroring, and strength controls preserve coherent flow. Tapered black ribbons and a central pinwheel provide contrast; smaller masked jewels fit only into remaining pockets after clearance checks against every wing and previously accepted jewels.
+
+Complexity preserves primary wings and progresses from plain outlines to flowing insets/feather sprays, then nested teardrops, additional fronds, veins, and scalloped loops. Details live inside exposed wings, not underneath later crowns. Stroke-aware feature thresholds, conservative curve-sampling guards, 100-detail/160-attempt wing budgets, 18 pocket attempts per sector, and the shared 4,000-path ceiling bound generation. Rejected candidates are counted explicitly. Closed wing-ornament self-intersections and actual sampled clearance are tested.
+
+The Paisley current preset, contextual direction/strength/division controls, history/default resets, exact preset matching, worker generation, Library storage, and SVG/PNG/JSON outputs reuse the existing studio. Inapplicable ring/layer/blend/growth and global ornament controls remain hidden. Older families retain their behavior and Classic floral serialization.
+
+Fixed-seed browser raster checks at 0/50/100% complexity measured 1,256 / 11,506 / 21,956 visible interior ink pixels at 1000 pixels, excluding primary outlines and solid accents while retaining masks. This verifies visible detail, rather than relying on the corresponding 25 / 97 / 289 path counts. The separate lotus complexity issue is still unresolved.
+
+**Verification:** 136 tests pass, including heavy-stroke jewel-to-jewel clearance across rotational copies. Lint, formatting, and production build pass. Browser checks cover direction/strength/division/stroke extremes, undo/preset restoration, narrow-screen controls/help, exact SVG/recipe reopening after Library refresh, real SVG/JSON downloads, transparent 1024 PNG, and opaque-white 2048 PNG. Comparing masked/unmasked custom artwork confirmed 6,890 rear ink pixels are removed, not painted white. The uniquely named verification project was removed afterward; no user projects, commits, or deployments were changed.
+
 **UI checks:**
 
 1. Select the swirling-paisley preset and compare it with floral and lotus designs. Expect a genuinely different flowing structure.
 2. Change swirl direction/strength and seeds. Expect coordinated motion with readable large forms and stable spacing.
 3. Check dense pockets and the outer edge at high zoom. Expect bounded detail, clean gaps, and consistent SVG/PNG appearance.
+4. Compare 0%, 50%, and 100% complexity at fixed seed/direction/strength. Expect plain wings, botanical sprays, then visibly richer filigree without changing the primary silhouette.
+5. Undo a direction change, restore the preset, save/reopen after Library refresh, and export SVG/JSON plus white/transparent PNGs. Expect exact settings/artwork, selected-preset state, correct dimensions, and transparent mask cutouts.
 
 ---
 
@@ -292,6 +304,7 @@ An additive version-1 composition recipe, editor mode/preset, contextual help, h
 - Preserve cancellation, stale-result rejection, timeouts, responsive sticky previews, and explicit complexity errors. Tune budgets from measured generation/export behavior rather than removing safeguards.
 - Verify solid accents, visible overlap masks, and decorative strokes survive save/reopen and SVG/PNG export. Carry their semantic distinctions forward for Part 2; region detection itself remains Phase 4.
 - Review a fixed-seed set across all three new families at thumbnail, normal-preview, and export sizes. Include representative sparse/dense settings and verify the actual design, not just automated geometry validity.
+- **Blocking lotus complexity fix:** plan exposed petal areas before decoration. Make 0% genuinely simple outlines, middle detail substantial botanical ornament, and 100% visibly intricate nested filigree. Fit substantial motifs before micro-detail and measure visible post-mask interior ink at fixed settings; more hidden paths do not satisfy the gate. The current lotus baseline decoration/occluded additions fail this contrast requirement; Phase 3.4 does not fix it.
 - Update the technical specifications and usage documentation alongside implementation.
 
 **Done when:** the three new families deliver convincing, distinct visual results, the user has reviewed representative outputs, and the complete edit/save/reopen/export workflow remains reliable. This is the visual-quality gate before Phase 4, not merely a feature-count checklist.

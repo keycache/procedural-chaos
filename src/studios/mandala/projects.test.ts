@@ -11,7 +11,13 @@ afterEach(async () => {
 });
 
 describe('saved mandala projects', () => {
-  it.each(['lotus', 'floral', 'floral-botanical', 'ornate-lotus'])(
+  it.each([
+    'lotus',
+    'floral',
+    'floral-botanical',
+    'ornate-lotus',
+    'swirling-paisley',
+  ])(
     'persists exact %s editor settings and recipe across database connections, then updates instead of duplicating',
     async (preset) => {
       const document = presetDocument(preset);
