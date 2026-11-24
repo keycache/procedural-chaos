@@ -106,7 +106,7 @@ export const floralCompositionSchema = z.strictObject({
 });
 export const ornateLotusCompositionSchema = z.strictObject({
   family: z.literal('ornate-lotus'),
-  version: z.literal(1),
+  version: z.union([z.literal(1), z.literal(2)]),
   complexity: fraction,
   ornament: z.never().optional(),
 });

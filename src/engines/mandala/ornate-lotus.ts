@@ -11,23 +11,26 @@ import {
   createOrnamentShape,
   leaf,
   shapeFromContour,
+  sampleContour,
   type OrnamentKind,
 } from './ornament-shapes';
 import { decorateOrnament } from './ornament-decoration';
 import { createPetalComposition } from './petal-composition';
 import { mapPath } from './geometry';
 import { errorMessage } from '../../shared/errors';
+import { decorateExposedLotus } from './lotus-ornament';
 
 export function createOrnateLotusRecipe(
   seed: string,
   complexity = 0.75,
   divisions = 8,
+  version: 1 | 2 = 2,
 ): MandalaRecipe {
   const recipe = createStarterRecipe(seed, 'freeform', 'rotational', divisions);
   return mandalaRecipeSchema.parse({
     ...recipe,
     style: singleStyle('traditional'),
-    composition: { family: 'ornate-lotus', version: 1, complexity },
+    composition: { family: 'ornate-lotus', version, complexity },
     global: { ...recipe.global, irregularity: 0, strokeWidth: 2.5 },
     layers: [],
   });
@@ -140,7 +143,7 @@ export function generateOrnateLotus(recipe: MandalaRecipe) {
       weight: 0.85,
     },
   ];
-  for (const crown of crowns) {
+  const planned = crowns.map((crown) => {
     const raw = createOrnamentShape(crown.kind, {
       base: crown.base * height,
       tip: crown.tip * height,
@@ -157,15 +160,61 @@ export function generateOrnateLotus(recipe: MandalaRecipe) {
       })),
       { from: crown.usableFrom ?? 0, to: 1 },
     );
+    return { ...crown, shape };
+  });
+  for (const [crownIndex, crown] of planned.entries()) {
+    const { shape } = crown;
     let decoration: ReturnType<typeof decorateOrnament>;
     try {
-      decoration = decorateOrnament(
-        shape,
-        { version: 1, treatment: crown.treatment, spacing: crown.spacing },
-        crown.detail,
-        recipe.global.strokeWidth,
-        `${recipe.seed}:${crown.id}`,
-      );
+      const covered =
+        recipe.composition.version === 2
+          ? planned
+              .slice(crownIndex + 1)
+              .flatMap((later) =>
+                Array.from({ length: later.count }, (_, index) => {
+                  const angle =
+                    (index / later.count) * Math.PI * 2 +
+                    (later.offset - crown.offset) * sector;
+                  const cos = Math.cos(angle),
+                    sin = Math.sin(angle);
+                  return {
+                    interior: sampleContour(
+                      mapPath(later.shape.contour, (p) => ({
+                        x: p.x * cos + p.y * sin,
+                        y: -p.x * sin + p.y * cos,
+                      })),
+                    ),
+                    samplingError: later.shape.samplingError,
+                  };
+                }),
+              )
+              .concat([
+                {
+                  interior: sampleContour(circle(0, 0, 0.048)),
+                  samplingError: 0.0001,
+                },
+              ])
+          : [];
+      decoration =
+        recipe.composition.version === 2
+          ? decorateExposedLotus(
+              shape,
+              covered,
+              detail,
+              recipe.global.strokeWidth,
+              crown.spacing,
+            )
+          : decorateOrnament(
+              shape,
+              {
+                version: 1,
+                treatment: crown.treatment,
+                spacing: crown.spacing,
+              },
+              crown.detail,
+              recipe.global.strokeWidth,
+              `${recipe.seed}:${crown.id}`,
+            );
     } catch (error) {
       throw new Error(
         `Could not decorate ${crown.id}: ${errorMessage(error)}`,
@@ -205,7 +254,11 @@ export function generateOrnateLotus(recipe: MandalaRecipe) {
     true,
   );
   add('lotus-heart', 'ink', circle(0, 0, 0.018), 0, 'solid-accent', 0);
-  for (let index = 0; index < order; index++)
+  for (
+    let index = 0;
+    index < (recipe.composition.version === 1 || detail > 0.5 ? order : 0);
+    index++
+  )
     add(
       'lotus-heart',
       `${index}-bead`,

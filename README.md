@@ -49,13 +49,13 @@ The reusable vocabulary includes leaves, lotus petals, paisleys, scallops, curls
 
 Select **Ornate layered lotus** under **Composition preset**, or **ornate-lotus** under **Generative style**. The curated starting point uses seed `lotus-bloom-008`, 75% complexity, eight divisions, and stroke width 2.5.
 
-- Expect six interleaved crowns: rounded outer scallops, dominant lotus petals, a double-count slender crown, curled inner petals, and two central rosette crowns. Fitted beads, botanical detail, and paisley curls alternate with quiet areas instead of adding circular separator bands.
-- Vary **Complexity** from low to high. Primary petal silhouettes and overlaps stay identical; the ornament changes. **Petal divisions** supports 6/8/10/12, with coordinated widths and offsets; the slender crown has twice that many petals.
+- Expect six interleaved crowns: rounded outer scallops, dominant lotus petals, a double-count slender crown, inner petals, and two central rosette crowns. Fitted beads, botanical detail, and nested jewels alternate with quiet areas instead of adding circular separator bands.
+- Compare **Complexity** at **0%, 50%, and 100%** with other settings fixed. New lotus designs progress from plain petals to botanical sprays, then nested tip jewels, leaf veins, and beaded borders. The planner checks exposed petal areas before fitting, so added ornament is not hidden under later crowns. Primary silhouettes and overlaps stay identical. **Petal divisions** supports 6/8/10/12; the slender crown has twice that many petals.
 - Compare seeds `lotus-bloom-008`, `lotus-bloom-009`, and `lotus-bloom-010`, then restore the starting preset. Expect bounded variations and exact reproduction.
 - **Stroke width** is limited to 0.25–4 design units to preserve readable central ornaments. Treatment/spacing choices are curated per crown rather than exposed as global overrides. Inapplicable ring/layer/blend controls stay hidden; the new division label and existing dials have info tooltips.
 - Zoom into overlapping crowns and export SVG/PNG: rear outlines and ornament should disappear beneath foreground petals, without white backing paint in transparent exports. Save/reopen, preset highlighting, and Undo/Redo work as with other families.
 
-**Known visual limitation:** lotus has substantial baseline ornament even at 0% complexity, and later crowns hide some added detail. Its 0–100% contrast still needs exposed-petal planning and a genuinely simple-to-intricate progression. This is a blocking Phase 3.5 quality requirement, not fixed by the paisley planner.
+**Saved-project compatibility:** new lotus designs use version-2 exposed-petal detail. Existing version-1 recipes and saved documents keep their exact original ornament, including its limited complexity contrast. Reopening one shows **Upgrade lotus detail**; upgrading is explicit, preserves primary petals, participates in Undo/Redo, and is saved/exported with the recipe. **Restore style defaults** alone does not upgrade an older project.
 
 ### Try the swirling paisley composition
 
@@ -70,9 +70,11 @@ Select **Paisley current** under **Composition preset**, or **swirling-paisley**
 
 ### Current generation limits
 
+The fixed-seed visual-quality set compares all three ornamental families at 0/50/100% complexity, thumbnail/preview/export sizes, and white/transparent backgrounds. For the new lotus, 0% contains no interior ornament; measured 50%/100% interior ink remains virtually entirely visible after masks. Original floral output and older lotus output are compatibility-protected, not silently restyled. Visual approval of the representative set remains the gate before Part 2; geometry checks alone do not establish visual quality.
+
 Style, blend, complexity, and structure/growth changes rebuild custom layers; global appearance changes preserve them. Adding/removing bands redistributes widths; moving swaps bands between radial slots. Use undo to recover an earlier composition.
 
-Band-based styled paths are closed and can enclose coloring regions, but dense intersections and tiny details are not automatically simplified. Ornamental drawings deliberately retain open decorative strokes separately from closed outlines; neither closure nor drawing roles guarantee clean coloring regions. Generation uses a Web Worker with a 200 ms debounce, cancellation/stale-result rejection, a 15-second timeout, and a 24,000-path band-engine limit. Classic floral stays below 1,500 drawing paths; art-directed compositions have a 4,000-path ceiling. Shape-aware treatments additionally limit each decorated motif to 128 accepted paths and 256 fitting attempts, with at most 48 beads per border. Paisley wings use a stricter 100-detail/160-attempt budget and at most 18 pocket-placement attempts per sector. Pending/error previews never silently export old artwork. Very large PNGs require more browser memory.
+Band-based styled paths are closed and can enclose coloring regions, but dense intersections and tiny details are not automatically simplified. Ornamental drawings deliberately retain open decorative strokes separately from closed outlines; neither closure nor drawing roles guarantee clean coloring regions. Generation uses a Web Worker with a 200 ms debounce, cancellation/stale-result rejection, a 15-second timeout, and a 24,000-path band-engine limit. Classic floral stays below 1,500 drawing paths; art-directed compositions have a 4,000-path ceiling. Shape-aware treatments additionally limit each decorated motif to 128 accepted paths and 256 fitting attempts, with at most 48 beads per border. New lotus petals and paisley wings use a stricter 100-detail/160-attempt budget; paisley additionally allows at most 18 pocket-placement attempts per sector. Pending/error previews never silently export old artwork. Very large PNGs require more browser memory.
 
 ## Prerequisites
 

@@ -76,6 +76,8 @@ export function RangeControl({
 export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
   const {
     mode,
+    lotusVersion,
+    setLotusVersion,
     blend,
     options,
     setMode,
@@ -161,7 +163,9 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
           mode === 'swirling-paisley'
             ? 'Progresses from plain flowing outlines to inset borders, branching feather forms, nested teardrops, and fine scalloped filigree. Detail is fitted inside exposed wings, rather than hidden beneath foreground crowns.'
             : mode === 'ornate-lotus'
-              ? 'Enriches the curated per-crown botanical, beaded, and paisley detail while preserving all primary petal silhouettes and overlaps. Unsafe details are omitted and reported below the preview.'
+              ? (lotusVersion ?? 1) === 1
+                ? 'Preserves the original lotus treatment, including its baseline ornament. Upgrade lotus detail for a simple-to-intricate progression in exposed petal areas.'
+                : 'Progresses from simple outlines through substantial botanical sprays to nested filigree and beaded borders. Detail is planned in exposed petal areas before fitting; primary silhouettes stay unchanged. Unsafe or undersized details are omitted and reported.'
               : mode === 'bold-floral' && ornament
                 ? 'Controls bounded inset, bead, vein, nested-petal, or scroll detail for the selected ornament treatment. The main floral silhouette stays unchanged. Details without enough clearance are omitted and reported below the preview.'
                 : mode === 'bold-floral'
@@ -173,6 +177,25 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
       />
       {isArtDirectedComposition(mode) ? (
         <div className="space-y-5 border-t border-border pt-4">
+          {mode === 'ornate-lotus' && (lotusVersion ?? 1) === 1 && (
+            <div className="space-y-2 text-sm">
+              <ControlLabel
+                label="Original lotus detail"
+                help="This saved version keeps its exact original artwork. Upgrading changes only the ornament planner, not the primary petals. The upgrade is explicit, undoable, and saved with the recipe."
+              />
+              <p className="text-xs text-muted-foreground">
+                This project uses the original ornament. Upgrade for
+                exposed-petal detail and a clearer complexity progression.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLotusVersion(2)}
+              >
+                Upgrade lotus detail
+              </Button>
+            </div>
+          )}
           {mode === 'bold-floral' && (
             <>
               <label className="block space-y-2 text-sm">
@@ -302,7 +325,7 @@ export function StyleControls({ recipe }: { recipe?: MandalaRecipe }) {
             {mode === 'swirling-paisley'
               ? 'Seeds vary coordinated wing fullness and reach. Smaller jewels are placed only where clearance remains between sweeping forms.'
               : mode === 'ornate-lotus'
-                ? 'Seeds vary coordinated crown fullness, height, petal bend, and scrolls. Ornament treatments are curated per crown to balance quiet and dense areas.'
+                ? 'Seeds vary coordinated crown fullness, height, and petal bend. Ornament is curated per crown; new lotus designs fit botanical sprays and nested jewels only in exposed areas.'
                 : 'Seeds vary petal fullness, crown height, leaf tips, and curl turns within a curated composition.'}{' '}
             Ring layers, hybrid weights, and distribution/growth controls do not
             apply to this family.

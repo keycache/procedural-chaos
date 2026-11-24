@@ -11,6 +11,21 @@ afterEach(async () => {
 });
 
 describe('saved mandala projects', () => {
+  it('reopens a legacy lotus document without implicitly upgrading its saved recipe', async () => {
+    const document = {
+      ...presetDocument('ornate-lotus'),
+      lotusVersion: undefined,
+    };
+    const recipe = editorRecipe(document);
+    const svg = createMandalaPreview(recipe).svg;
+    const saved = await saveMandalaProject(document, recipe, svg, null);
+    const loaded = readMandalaProject(JSON.parse(JSON.stringify(saved)));
+    expect(loaded.data.recipe.composition).toMatchObject({ version: 1 });
+    expect(editorRecipe(loaded.data.document)).toEqual(recipe);
+    expect(createMandalaPreview(editorRecipe(loaded.data.document)).svg).toBe(
+      svg,
+    );
+  });
   it.each([
     'lotus',
     'floral',

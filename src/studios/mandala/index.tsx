@@ -25,6 +25,7 @@ export function MandalaStudio() {
     globals,
     ornament,
     swirl,
+    lotusVersion,
     layers,
     name,
     past,
@@ -47,13 +48,24 @@ export function MandalaStudio() {
           globals,
           ornament,
           swirl,
+          lotusVersion,
           layers,
         }),
       };
     } catch (error) {
       return { error: errorMessage(error) };
     }
-  }, [seed, mode, blend, options, globals, layers, ornament, swirl]);
+  }, [
+    seed,
+    mode,
+    blend,
+    options,
+    globals,
+    layers,
+    ornament,
+    swirl,
+    lotusVersion,
+  ]);
   const generation = useGeneration(plan.recipe);
   const ready =
     generation && 'result' in generation ? generation.result : undefined;

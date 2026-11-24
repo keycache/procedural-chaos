@@ -5,8 +5,84 @@ import { mapPath } from './geometry';
 import { mandalaRecipeSchema } from './recipe';
 import { renderSvg, serializePath } from './svg';
 import { transformPath } from './symmetry';
+import { borderClearance } from './ornament-decoration';
+import { sampleContour } from './ornament-shapes';
 
 describe('ornate layered lotus', () => {
+  it('preserves the original lotus artwork for existing recipes', async () => {
+    const recipe = createOrnateLotusRecipe('lotus-bloom-008', 0.75, 8, 1);
+    const digest = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(renderSvg(generateMandala(recipe), recipe)),
+    );
+    expect(
+      Array.from(new Uint8Array(digest), (byte) =>
+        byte.toString(16).padStart(2, '0'),
+      ).join(''),
+    ).toBe('bb277c44061f43ae1a6481a46be847fbe25538987fe15040454c9efb673a016c');
+    const upgraded = createOrnateLotusRecipe(recipe.seed, 0.75, 8, 2);
+    const silhouettes = (input: typeof recipe) =>
+      generateMandala(input)
+        .paths.filter((path) => path.occludes)
+        .map((path) => path.d);
+    expect(silhouettes(upgraded)).toEqual(silhouettes(recipe));
+  });
+  it('plans botanical and nested detail in exposed petals while zero detail stays genuinely plain', () => {
+    const [plain, middle, dense] = [0, 0.5, 1].map((detail) =>
+      generateMandala(createOrnateLotusRecipe('lotus-bloom-008', detail)),
+    );
+    expect(plain.paths.some((path) => path.id.includes('-ornament-'))).toBe(
+      false,
+    );
+    expect(
+      middle.paths.some((path) => path.id.includes('botanical-leaf-')),
+    ).toBe(true);
+    expect(middle.paths.some((path) => path.id.includes('nested-jewel-'))).toBe(
+      false,
+    );
+    expect(dense.paths.some((path) => path.id.includes('nested-jewel-'))).toBe(
+      true,
+    );
+    const foreground = dense.paths
+      .filter((path) => path.occludes)
+      .map((path) => ({ ...path, polygon: sampleContour(path.d, 64) }));
+    for (const path of dense.paths.filter((path) =>
+      path.id.includes('-0-ornament-'),
+    )) {
+      const parent = foreground.find(
+        (boundary) => boundary.layerId === path.layerId,
+      )!;
+      for (const point of sampleContour(path.d, 64)) {
+        expect(borderClearance(parent.polygon, point), path.id).toBeGreaterThan(
+          dense.ornamentFit!.clearance + path.strokeWidth / 2 - 0.1,
+        );
+        for (const cover of foreground.filter(
+          (boundary) => boundary.drawOrder > path.drawOrder,
+        ))
+          expect(
+            borderClearance(cover.polygon, point),
+            `${path.id} beneath ${cover.id}`,
+          ).toBeLessThan(
+            -dense.ornamentFit!.clearance - path.strokeWidth / 2 + 0.1,
+          );
+      }
+    }
+    const foliage = dense.paths
+      .filter((path) => path.id.includes('-0-ornament-botanical-leaf-'))
+      .map((path) => ({ ...path, polygon: sampleContour(path.d, 64) }));
+    for (const frond of foliage)
+      for (const other of foliage.filter(
+        (path) =>
+          path.id !== frond.id &&
+          path.layerId === frond.layerId &&
+          path.id.endsWith('--1') === frond.id.endsWith('--1'),
+      ))
+        for (const point of frond.polygon)
+          expect(
+            borderClearance(other.polygon, point),
+            `${frond.id} against ${other.id}`,
+          ).toBeLessThan(-(frond.strokeWidth + other.strokeWidth) / 2);
+  });
   it('reproduces coordinated seeded crowns while detail leaves their silhouettes unchanged', () => {
     const recipe = createOrnateLotusRecipe('lotus-bloom-008');
     const original = structuredClone(recipe);
@@ -150,7 +226,7 @@ describe('ornate layered lotus', () => {
   it('rejects unknown versions, ring controls and global ornament overrides', () => {
     const recipe = createOrnateLotusRecipe('validation');
     for (const change of [
-      { composition: { ...recipe.composition, version: 2 } },
+      { composition: { ...recipe.composition, version: 3 } },
       {
         composition: {
           ...recipe.composition,

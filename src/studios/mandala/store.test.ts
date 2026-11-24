@@ -5,6 +5,7 @@ import {
   createEditorDocument,
   editorRecipe,
   matchingPresetId,
+  presetDocument,
   presets,
 } from './editor';
 import { renderSvg } from '../../engines/mandala/svg';
@@ -171,6 +172,38 @@ describe('style editor state', () => {
     expect(() =>
       editorRecipe({ ...createEditorDocument(), swirl: original.swirl }),
     ).toThrow('Swirl settings');
+  });
+
+  it('preserves older lotus recipes until an explicit undoable upgrade and clears versions across families', () => {
+    const state = useMandalaStore.getState();
+    const modern = presetDocument('ornate-lotus');
+    const legacy = { ...modern, lotusVersion: undefined };
+    state.openProject(legacy, 'legacy-lotus');
+    const recipe = editorRecipe(useMandalaStore.getState());
+    expect(recipe.composition).toMatchObject({
+      family: 'ornate-lotus',
+      version: 1,
+    });
+    expect(matchingPresetId(legacy)).toBe('');
+    state.resetOverrides();
+    expect(editorRecipe(useMandalaStore.getState())).toEqual(recipe);
+    state.setLotusVersion(2);
+    expect(editorRecipe(useMandalaStore.getState()).composition).toMatchObject({
+      version: 2,
+    });
+    expect(matchingPresetId(useMandalaStore.getState())).toBe('ornate-lotus');
+    state.undo();
+    expect(editorRecipe(useMandalaStore.getState())).toEqual(recipe);
+    state.redo();
+    state.setMode('swirling-paisley');
+    expect(useMandalaStore.getState().lotusVersion).toBeUndefined();
+    state.undo();
+    expect(useMandalaStore.getState().lotusVersion).toBe(2);
+    state.openProject(createEditorDocument(), 'old-band-project');
+    expect(useMandalaStore.getState().lotusVersion).toBeUndefined();
+    expect(() =>
+      editorRecipe({ ...createEditorDocument(), lotusVersion: 2 }),
+    ).toThrow('Lotus detail versions');
   });
 
   it('restores style defaults while preserving a valid custom blend', () => {

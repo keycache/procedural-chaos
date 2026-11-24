@@ -29,6 +29,7 @@ type MandalaState = EditorDocument & {
   setGlobals: (globals: EditorDocument['globals']) => void;
   setOrnament: (ornament: EditorDocument['ornament']) => void;
   setSwirl: (swirl: NonNullable<EditorDocument['swirl']>) => void;
+  setLotusVersion: (version: 1 | 2) => void;
   resetOverrides: () => void;
   applyPreset: (id: string) => void;
   editLayer: (id: string, change: Partial<LayerRecipe>) => void;
@@ -43,9 +44,30 @@ type MandalaState = EditorDocument & {
 };
 
 export function editorSnapshot(state: EditorDocument): EditorDocument {
-  const { name, seed, mode, blend, options, globals, layers, ornament, swirl } =
-    state;
-  return { name, seed, mode, blend, options, globals, layers, ornament, swirl };
+  const {
+    name,
+    seed,
+    mode,
+    blend,
+    options,
+    globals,
+    layers,
+    ornament,
+    swirl,
+    lotusVersion,
+  } = state;
+  return {
+    name,
+    seed,
+    mode,
+    blend,
+    options,
+    globals,
+    layers,
+    ornament,
+    swirl,
+    lotusVersion,
+  };
 }
 
 export const useMandalaStore = create<MandalaState>((set, get) => {
@@ -81,6 +103,7 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
         ornament: undefined,
         swirl:
           mode === 'swirling-paisley' ? { ...defaultSwirlSettings } : undefined,
+        lotusVersion: mode === 'ornate-lotus' ? 2 : undefined,
       }),
     setWeight: (style, weight) =>
       commit({ blend: { ...get().blend, [style]: weight }, layers: null }),
@@ -90,6 +113,7 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
       commit({ globals: { ...get().globals, ...globals } }),
     setOrnament: (ornament) => commit({ ornament }),
     setSwirl: (swirl) => commit({ swirl }),
+    setLotusVersion: (lotusVersion) => commit({ lotusVersion }),
     resetOverrides: () => {
       const mode = get().mode;
       commit({
@@ -201,6 +225,7 @@ export const useMandalaStore = create<MandalaState>((set, get) => {
         ...document,
         ornament: document.ornament,
         swirl: document.swirl,
+        lotusVersion: document.lotusVersion,
         projectId,
         past: [],
         future: [],

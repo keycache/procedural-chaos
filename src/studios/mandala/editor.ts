@@ -41,6 +41,7 @@ export const editorDocumentSchema = z.strictObject({
   layers: z.array(layerSchema).min(1).max(12).nullable(),
   ornament: ornamentSettingsSchema.optional(),
   swirl: swirlSettingsSchema.optional(),
+  lotusVersion: z.union([z.literal(1), z.literal(2)]).optional(),
 });
 
 export type EditorDocument = z.output<typeof editorDocumentSchema>;
@@ -67,10 +68,15 @@ export function createEditorDocument(): EditorDocument {
     layers: null,
     ornament: undefined,
     swirl: undefined,
+    lotusVersion: undefined,
   };
 }
 
 export function editorRecipe(document: EditorDocument): MandalaRecipe {
+  if (document.mode !== 'ornate-lotus' && document.lotusVersion !== undefined)
+    throw new Error(
+      'Lotus detail versions require the ornate-lotus composition.',
+    );
   if (document.mode !== 'swirling-paisley' && document.swirl)
     throw new Error('Swirl settings require the swirling-paisley composition.');
   if (isArtDirectedComposition(document.mode)) {
@@ -93,10 +99,6 @@ export function editorRecipe(document: EditorDocument): MandalaRecipe {
       throw new Error(
         'This family uses curated ornament treatments, not a global ornament override.',
       );
-    const createRecipe =
-      document.mode === 'ornate-lotus'
-        ? createOrnateLotusRecipe
-        : createBoldFloralRecipe;
     const planned =
       document.mode === 'swirling-paisley'
         ? createSwirlingPaisleyRecipe(
@@ -105,11 +107,18 @@ export function editorRecipe(document: EditorDocument): MandalaRecipe {
             document.options.symmetryOrder,
             document.swirl,
           )
-        : createRecipe(
-            document.seed,
-            document.options.complexity,
-            document.options.symmetryOrder,
-          );
+        : document.mode === 'ornate-lotus'
+          ? createOrnateLotusRecipe(
+              document.seed,
+              document.options.complexity,
+              document.options.symmetryOrder,
+              document.lotusVersion ?? 1,
+            )
+          : createBoldFloralRecipe(
+              document.seed,
+              document.options.complexity,
+              document.options.symmetryOrder,
+            );
     return mandalaRecipeSchema.parse({
       ...planned,
       composition: { ...planned.composition, ornament: document.ornament },
@@ -284,6 +293,7 @@ export function presetDocument(id: string): EditorDocument {
       preset.style === 'swirling-paisley'
         ? { ...defaultSwirlSettings }
         : undefined,
+    lotusVersion: preset.style === 'ornate-lotus' ? 2 : undefined,
   };
 }
 
@@ -304,6 +314,8 @@ export function matchingPresetId(document: EditorDocument): string {
       return (
         document.seed === expected.seed &&
         document.mode === expected.mode &&
+        (document.mode !== 'ornate-lotus' ||
+          (document.lotusVersion ?? 1) === expected.lotusVersion) &&
         document.options.complexity === expected.options.complexity &&
         document.ornament?.treatment === expected.ornament?.treatment &&
         document.ornament?.spacing === expected.ornament?.spacing &&
